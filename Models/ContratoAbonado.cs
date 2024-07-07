@@ -15,6 +15,6 @@ public partial class ContratoAbonado
     public string? TipoPago { get; set; }
     public bool EstadoPago { get; set; }
     public string? Observacion { get; set; }
-    public virtual Vehiculo OVehiculo { get; set; } = null!;
-    public virtual CajaChica? OCajaChica { get; set; } = null!;
+    public virtual Vehiculo Vehiculo { get; set; } = null!;
+    public virtual CajaChica? CajaChica { get; set; } = null!;
 }

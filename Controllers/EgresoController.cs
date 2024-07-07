@@ -29,13 +29,15 @@ namespace ViteMontevideo_API.Controllers
         [HttpGet]
         public IActionResult Listar() 
         {
-            var egresos = _dbContext.Egresos
+            var data = _dbContext.Egresos
                 .AsNoTracking()
                 .OrderByDescending(c => c.IdEgreso)
                 .ProjectTo<EgresoResponseDto>(_mapper.ConfigurationProvider)
                 .ToList();
 
-            return Ok(egresos);
+            int cantidad = data.Count;
+
+            return Ok(new DataResponse<EgresoResponseDto>(cantidad,data));
         }
 
         [HttpGet("{id}")]
@@ -51,13 +53,16 @@ namespace ViteMontevideo_API.Controllers
 
         [HttpPost]
         [ServiceFilter(typeof(ValidationFilterAttribute))]
-        public IActionResult Guardar(EgresoRequestDto egresoDto)
+        public IActionResult Guardar(EgresoCrearRequestDto egresoDto)
         {
             var cajaChicaAbierta = _dbContext.CajasChicas.FirstOrDefault(cc => cc.Estado == true) ?? throw new NotFoundException("No hay caja chica abierta.");
 
-            egresoDto.IdCaja = cajaChicaAbierta.IdCaja;
+            if (cajaChicaAbierta.FechaInicio > egresoDto.Fecha)
+                throw new BadRequestException($"La fecha del egreso debe ser igual o mayor a la fecha de inicio ({cajaChicaAbierta.FechaInicio.ToShortDateString()}) de la caja chica.");
 
             var egreso = _mapper.Map<Egreso>(egresoDto);
+
+            egreso.IdCaja = cajaChicaAbierta.IdCaja;
 
             _dbContext.Egresos.Add(egreso);
             _dbContext.SaveChanges();
@@ -69,14 +74,14 @@ namespace ViteMontevideo_API.Controllers
 
         [HttpPut("{id}")]
         [ServiceFilter(typeof(ValidationFilterAttribute))]
-        public IActionResult Editar([FromRoute] int id,[FromBody] EgresoRequestDto egresoDto)
+        public IActionResult Editar([FromRoute] int id,[FromBody] EgresoActualizarRequestDto egresoDto)
         {
             var dbEgreso = _dbContext.Egresos.Find(id) ?? throw new NotFoundException("Egreso no encontrado.");
 
-            dbEgreso.Motivo = egresoDto.Motivo;
-            dbEgreso.Monto = egresoDto.Monto;
-            dbEgreso.Hora = egresoDto.Hora;
-            dbEgreso.Fecha = egresoDto.Fecha;
+            dbEgreso.Motivo = egresoDto.Motivo ?? dbEgreso.Motivo;
+            dbEgreso.Monto = egresoDto.Monto ?? dbEgreso.Monto;
+            dbEgreso.Hora = egresoDto.Hora ?? dbEgreso.Hora;
+            dbEgreso.Fecha = egresoDto.Fecha ?? dbEgreso.Fecha;
 
             _dbContext.SaveChanges();
 

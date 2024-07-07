@@ -15,7 +15,7 @@ public partial class Servicio
     public decimal Descuento { get; set; }
     public string? Observacion { get; set; }
     public bool EstadoPago { get; set; }
-    public virtual CajaChica? OCajaChica { get; set; } = null!;
-    public virtual Vehiculo OVehiculo { get; set; } = null!;
-    public virtual Tarifa? OTarifa { get; set; } = null!;
+    public virtual CajaChica? CajaChica { get; set; } = null!;
+    public virtual Vehiculo Vehiculo { get; set; } = null!;
+    public virtual Tarifa? Tarifa { get; set; } = null!;
 }

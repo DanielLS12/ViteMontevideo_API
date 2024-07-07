@@ -31,12 +31,15 @@ namespace ViteMontevideo_API.Controllers
         [HttpGet]
         public IActionResult Listar()
         {
-            var clientes = _dbContext.Clientes
+            var data = _dbContext.Clientes
                 .AsNoTracking()
                 .OrderByDescending(c => c.IdCliente)
                 .ProjectTo<ClienteResponseDto>(_mapper.ConfigurationProvider)
                 .ToList();
-            return Ok(clientes);
+
+            int cantidad = data.Count;
+
+            return Ok(new DataResponse<ClienteResponseDto>(cantidad,data));
         }
 
         [HttpGet("{id}")]
@@ -51,7 +54,7 @@ namespace ViteMontevideo_API.Controllers
 
         [HttpPost]
         [ServiceFilter(typeof(ValidationFilterAttribute))]
-        public IActionResult Guardar(ClienteRequestDto clienteDto)
+        public IActionResult Guardar(ClienteCrearRequestDto clienteDto)
         {
             clienteDto = LimpiarDatos(clienteDto);
 
@@ -67,16 +70,16 @@ namespace ViteMontevideo_API.Controllers
 
         [HttpPut("{id}")]
         [ServiceFilter(typeof(ValidationFilterAttribute))]
-        public IActionResult Editar([FromRoute] int id,[FromBody] ClienteRequestDto clienteDto)
+        public IActionResult Editar([FromRoute] int id,[FromBody] ClienteActualizarRequestDto clienteDto)
         {
             var dbCliente = _dbContext.Clientes.Find(id) ?? throw new NotFoundException("Cliente no encontrado.");
 
             clienteDto = LimpiarDatos(clienteDto);
 
-            dbCliente.Nombres = clienteDto.Nombres.Trim();
-            dbCliente.Apellidos = clienteDto.Apellidos.Trim();
-            dbCliente.Telefono = string.IsNullOrWhiteSpace(clienteDto.Telefono) ? null : clienteDto.Telefono.Trim();
-            dbCliente.Correo = string.IsNullOrWhiteSpace(clienteDto.Correo) ? null : clienteDto.Correo.Trim();
+            dbCliente.Nombres = clienteDto.Nombres ?? dbCliente.Nombres;
+            dbCliente.Apellidos = clienteDto.Apellidos ?? dbCliente.Apellidos;
+            dbCliente.Telefono = string.IsNullOrWhiteSpace(clienteDto.Telefono) ? null : clienteDto.Telefono;
+            dbCliente.Correo = string.IsNullOrWhiteSpace(clienteDto.Correo) ? null : clienteDto.Correo;
 
             _dbContext.SaveChanges();
 
@@ -91,9 +94,10 @@ namespace ViteMontevideo_API.Controllers
             var cliente = _dbContext.Clientes.Find(id) ?? throw new NotFoundException("Cliente no encontrado.");
 
             var tieneComerciosAdicionales = _dbContext.ComerciosAdicionales.Any(ca => ca.IdCliente == id);
+            var tieneVehiculos = _dbContext.Vehiculos.Any(v => v.IdCliente == id);
 
-            if (tieneComerciosAdicionales)
-                throw new BadRequestException("No se puede eliminar este cliente porque tiene comercio(s) adicional(es).");
+            if (tieneComerciosAdicionales || tieneVehiculos)
+                throw new BadRequestException("No se puede eliminar este cliente porque tiene vehiculo(s) y/o comercio(s) adicional(es).");
 
             _dbContext.Clientes.Remove(cliente);
             _dbContext.SaveChanges();
@@ -103,12 +107,25 @@ namespace ViteMontevideo_API.Controllers
             return Ok(response);
         }
 
-        private static ClienteRequestDto LimpiarDatos(ClienteRequestDto cliente)
+        private static ClienteCrearRequestDto LimpiarDatos(ClienteCrearRequestDto cliente)
         {
             cliente.Nombres = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Regex.Replace(cliente.Nombres, @"\s+", " ").Trim());
             cliente.Apellidos = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Regex.Replace(cliente.Apellidos, @"\s+", " ").Trim());
             if (cliente.Telefono != null) cliente.Telefono = Regex.Replace(cliente.Telefono, @"\s+", " ").Trim();
-            if (cliente.Correo != null) cliente.Correo = Regex.Replace(cliente.Correo, @"\s+", "");
+            if (cliente.Correo != null) cliente.Correo = Regex.Replace(cliente.Correo, @"\s+", "").Trim();
+            return cliente;
+        }
+
+        private static ClienteActualizarRequestDto LimpiarDatos(ClienteActualizarRequestDto cliente)
+        {
+            if (cliente.Nombres != null)
+                cliente.Nombres = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Regex.Replace(cliente.Nombres, @"\s+", " ").Trim());
+            if(cliente.Apellidos != null)
+                cliente.Apellidos = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Regex.Replace(cliente.Apellidos, @"\s+", " ").Trim());
+            if (cliente.Telefono != null) 
+                cliente.Telefono = Regex.Replace(cliente.Telefono, @"\s+", " ").Trim();
+            if (cliente.Correo != null) 
+                cliente.Correo = Regex.Replace(cliente.Correo, @"\s+", "").Trim();
             return cliente;
         }
     }

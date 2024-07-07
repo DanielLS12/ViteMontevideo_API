@@ -29,98 +29,86 @@ namespace ViteMontevideo_API.Controllers
         [HttpGet]
         public IActionResult Listar() 
         {
-            var comerciosAdicionales = _dbContext.ComerciosAdicionales
+            var data = _dbContext.ComerciosAdicionales
                 .AsNoTracking()
                 .OrderByDescending(c => c.IdComercioAdicional)
                 .ProjectTo<ComercioAdicionalResponseDto>(_mapper.ConfigurationProvider)
                 .ToList();
-            return Ok(comerciosAdicionales);
+
+            int cantidad = data.Count;
+
+            return Ok(new DataResponse<ComercioAdicionalResponseDto>(cantidad,data));
         }
 
         [HttpGet("{id}")]
-        public IActionResult Obtener(int id_comercio_adicional)
+        public IActionResult Obtener(int id)
         {
             var comercioAdicional = _dbContext.ComerciosAdicionales
                 .AsNoTracking()
                 .ProjectTo<ComercioAdicionalResponseDto>(_mapper.ConfigurationProvider)
-                .FirstOrDefault(ca => ca.IdComercioAdicional == id_comercio_adicional) ?? throw new NotFoundException("Ingreso adicional no encontrado.");
+                .FirstOrDefault(ca => ca.IdComercioAdicional == id) ?? throw new NotFoundException("Comercio adicional no encontrado.");
+
             return Ok(comercioAdicional);
         }
 
         [HttpPost]
         [ServiceFilter(typeof(ValidationFilterAttribute))]
-        public IActionResult Guardar(ComercioAdicionalRequestDto comercioAdicionalDto)
+        public IActionResult Guardar(ComercioAdicionalCrearRequestDto comercioAdicionalDto)
         {
             var cliente = _dbContext.Clientes.Find(comercioAdicionalDto.IdCliente) ?? throw new NotFoundException("Cliente no encontrado.");
-
-            if (comercioAdicionalDto.FechaPago == null || comercioAdicionalDto.HoraPago == null)
-            {
-                comercioAdicionalDto.FechaPago = null;
-                comercioAdicionalDto.HoraPago = null;
-                comercioAdicionalDto.IdCaja = null;
-                comercioAdicionalDto.TipoPago = null;
-            }
-            else
-            {
-                var cajaChicaAbierta = _dbContext.CajasChicas.FirstOrDefault(cc => cc.Estado == true) ?? throw new NotFoundException("No hay caja chica abierta.");
-                comercioAdicionalDto.IdCaja = cajaChicaAbierta.IdCaja;
-            }
 
             var comercioAdicional = _mapper.Map<ComercioAdicional>(comercioAdicionalDto);
 
             _dbContext.ComerciosAdicionales.Add(comercioAdicional);
             _dbContext.SaveChanges();
 
-            var response = ApiResponse.SuccessCreated("El ingreso adicional ha sido agregado.");
+            var response = ApiResponse.SuccessCreated("El comercio adicional ha sido agregado.");
 
             return CreatedAtAction(nameof(Obtener), new { id = comercioAdicional.IdComercioAdicional }, response);
         }
 
         [HttpPut("{id}")]
         [ServiceFilter(typeof(ValidationFilterAttribute))]
-        public IActionResult Editar([FromRoute] int id,[FromBody] ComercioAdicionalRequestDto comercioAdicionalDto)
+        public IActionResult Editar([FromRoute] int id,[FromBody] ComercioAdicionalActualizarRequestDto comercioAdicionalDto)
         {
             var dbComercioAdicional = _dbContext.ComerciosAdicionales.Find(id) ?? throw new NotFoundException("Ingreso adicional no encontrado.");
 
-            var cliente = _dbContext.Clientes.Find(comercioAdicionalDto.IdCliente) ?? throw new NotFoundException("Cliente no encontrado.");
+            if(comercioAdicionalDto.IdCliente != null)
+            {
+                var cliente = _dbContext.Clientes.Find(comercioAdicionalDto.IdCliente) ?? throw new NotFoundException("Cliente no encontrado.");
+                dbComercioAdicional.IdCliente = cliente.IdCliente;
+            }
 
-            dbComercioAdicional.IdCliente = cliente.IdCliente;
-            dbComercioAdicional.TipoComercioAdicional = comercioAdicionalDto.TipoComercioAdicional;
-            dbComercioAdicional.Monto = comercioAdicionalDto.Monto;
-            dbComercioAdicional.FechaPago = comercioAdicionalDto.FechaPago;
-            dbComercioAdicional.HoraPago = comercioAdicionalDto.HoraPago;
-            dbComercioAdicional.TipoPago = comercioAdicionalDto.TipoPago;
+            dbComercioAdicional.TipoComercioAdicional = comercioAdicionalDto.TipoComercioAdicional ?? dbComercioAdicional.TipoComercioAdicional;
+            dbComercioAdicional.Monto = comercioAdicionalDto.Monto ?? dbComercioAdicional.Monto;
             dbComercioAdicional.Observacion = string.IsNullOrWhiteSpace(comercioAdicionalDto.Observacion) ? null : comercioAdicionalDto.Observacion.Trim();
 
             _dbContext.SaveChanges();
 
-            var response = ApiResponse.Success("El ingreso adicional ha sido actualizado.");
+            var response = ApiResponse.Success("El comercio adicional ha sido actualizado.");
 
             return Ok(response);
         }
 
         [HttpPatch("{id}/pagar")]
         [ServiceFilter(typeof(ValidationFilterAttribute))]
-        public IActionResult Pagar([FromRoute] int id, [FromBody] ComercioAdicionalRequestDto comercioAdicionalDto)
+        public IActionResult Pagar([FromRoute] int id, [FromBody] ComercioAdicionalPagarRequestDto comercioAdicionalDto)
         {
-            if (comercioAdicionalDto.FechaPago == null || comercioAdicionalDto.HoraPago == null || comercioAdicionalDto.TipoPago == null)
-                throw new BadRequestException("La fecha, hora y tipo de pago no pueden estar vacias.");
-
-            var comercioAdicional = _dbContext.ComerciosAdicionales.Find(id) ?? throw new NotFoundException("Ingreso adicional no encontrado.");
+            var comercioAdicional = _dbContext.ComerciosAdicionales.Find(id) ?? throw new NotFoundException("Comercio adicional no encontrado.");
 
             if (comercioAdicional.FechaPago != null)
-                throw new BadRequestException("Este ingreso adicional ya ha sido pagado.");
+                throw new BadRequestException("Este comercio adicional ya estaba pagado.");
 
             var cajaChicaAbierta = _dbContext.CajasChicas.FirstOrDefault(cc => cc.Estado == true) ?? throw new NotFoundException("No hay caja chica abierta.");
 
-            comercioAdicionalDto.IdCaja = cajaChicaAbierta.IdCaja;
+            comercioAdicional.IdCaja = cajaChicaAbierta.IdCaja;
             comercioAdicional.FechaPago = comercioAdicionalDto.FechaPago;
             comercioAdicional.HoraPago = comercioAdicionalDto.HoraPago;
             comercioAdicional.TipoPago = comercioAdicionalDto.TipoPago;
 
             _dbContext.SaveChanges();
 
-            var response = ApiResponse.Success("El ingreso adicional ha sido pagado.");
+            var response = ApiResponse.Success("El comercio adicional ha sido pagado.");
 
             return Ok(response);
         }
@@ -128,7 +116,10 @@ namespace ViteMontevideo_API.Controllers
         [HttpPatch("{id}/anular-pago")]
         public IActionResult AnularPago(int id)
         {
-            var comercioAdicional = _dbContext.ComerciosAdicionales.Find(id) ?? throw new NotFoundException("Ingreso adicional no encontrado.");
+            var comercioAdicional = _dbContext.ComerciosAdicionales.Find(id) ?? throw new NotFoundException("Comercio adicional no encontrado.");
+
+            if (comercioAdicional.IdCaja == null)
+                throw new BadRequestException("Este comercio adicional ya estaba anulado.");
 
             comercioAdicional.IdCaja = null;
             comercioAdicional.FechaPago = null;
@@ -137,7 +128,7 @@ namespace ViteMontevideo_API.Controllers
 
             _dbContext.SaveChanges();
 
-            var response = ApiResponse.Success("El pago del ingreso adicional ha sido anulado.");
+            var response = ApiResponse.Success("El pago del comercio adicional ha sido anulado.");
 
             return Ok(response);
         }
@@ -146,12 +137,12 @@ namespace ViteMontevideo_API.Controllers
         [HttpDelete("{id}")]
         public IActionResult Eliminar(int id)
         {
-            var comercioAdicional = _dbContext.ComerciosAdicionales.Find(id) ?? throw new NotFoundException("Ingreso adicional no encontrado.");
+            var comercioAdicional = _dbContext.ComerciosAdicionales.Find(id) ?? throw new NotFoundException("Comercio adicional no encontrado.");
 
             _dbContext.ComerciosAdicionales.Remove(comercioAdicional);
             _dbContext.SaveChanges();
 
-            var response = ApiResponse.Success("El ingreso adicional ha sido eliminado.");
+            var response = ApiResponse.Success("El comercio adicional ha sido eliminado.");
 
             return Ok(response);
         }

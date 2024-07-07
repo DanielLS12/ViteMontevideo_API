@@ -64,7 +64,7 @@ namespace ViteMontevideo_API.Controllers
 
         [HttpPut("{id}")]
         [ServiceFilter(typeof(ValidationFilterAttribute))]
-        public IActionResult Editar([FromRoute] int id,[FromBody] Actividad actividad)
+        public IActionResult Editar([FromRoute] short id,[FromBody] Actividad actividad)
         {
             var dbActividad = _dbContext.Actividades.Find(id) ?? throw new NotFoundException("Actividad no encontrada.");
 
@@ -85,7 +85,7 @@ namespace ViteMontevideo_API.Controllers
         }
 
         [HttpDelete("{id}")]
-        public IActionResult Eliminar(int id)
+        public IActionResult Eliminar(short id)
         {
             var dbActividad = _dbContext.Actividades.Find(id) ?? throw new NotFoundException("Actividad no encontrada.");
 

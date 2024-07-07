@@ -15,6 +15,6 @@ public partial class Trabajador
     public string Dni { get; set; } = null!;
     public bool Estado { get; set; }
     public virtual ICollection<CajaChica> CajasChicas { get; set; } = new List<CajaChica>();
-    public virtual Cargo OCargo { get; set; } = null!;
+    public virtual Cargo Cargo { get; set; } = null!;
     public virtual Usuario? OUsuario { get; set; }
 }

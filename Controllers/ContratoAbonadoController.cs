@@ -29,13 +29,15 @@ namespace ViteMontevideo_API.Controllers
         [HttpGet]
         public IActionResult Listar()
         {
-            var contratosAbonados = _dbContext.ContratosAbonados
+            var data = _dbContext.ContratosAbonados
                 .AsNoTracking()
                 .OrderByDescending(c => c.IdContratoAbonado)
                 .ProjectTo<ContratoAbonadoResponseDto>(_mapper.ConfigurationProvider)
                 .ToList();
 
-            return Ok(contratosAbonados);
+            int cantidad = data.Count;
+
+            return Ok(new DataResponse<ContratoAbonadoResponseDto>(cantidad,data));
         }
 
         [HttpGet("{id}")]
@@ -51,28 +53,14 @@ namespace ViteMontevideo_API.Controllers
 
         [HttpPost]
         [ServiceFilter(typeof(ValidationFilterAttribute))]
-        public IActionResult Guardar(ContratoAbonadoRequestDto contratoAbonadoDto)
+        public IActionResult Guardar(ContratoAbonadoCrearRequestDto contratoAbonadoDto)
         {
-            if (contratoAbonadoDto.EstadoPago)
-            {
-                if (contratoAbonadoDto.FechaPago == null || contratoAbonadoDto.HoraPago == null || contratoAbonadoDto.TipoPago == null)
-                    throw new BadRequestException("La fecha, hora y tipo de pago no pueden estar vacias.");
-            }
-
             var buscarVehiculo = _dbContext.Vehiculos.Find(contratoAbonadoDto.IdVehiculo) ?? throw new NotFoundException("Vehículo no encontrado.");
 
-            if (contratoAbonadoDto.EstadoPago)
-            {
-                var cajaChicaAbierta = _dbContext.CajasChicas.FirstOrDefault(cc => cc.Estado == true) ?? throw new NotFoundException("No hay caja chica abierta.");
-                contratoAbonadoDto.IdCaja = cajaChicaAbierta.IdCaja;
-            } 
-            else
-            {
-                contratoAbonadoDto.IdCaja = null;
-                contratoAbonadoDto.FechaPago = null;
-                contratoAbonadoDto.HoraPago = null;
-                contratoAbonadoDto.TipoPago = null;
-            }
+            var tieneServicioEnMarcha = _dbContext.Servicios.Any(s => s.IdVehiculo == contratoAbonadoDto.IdVehiculo && s.EstadoPago == false);
+
+            if (tieneServicioEnMarcha)
+                throw new BadRequestException("Este vehículo tiene un servicio en marcha con modalidad de hora o turno. No se pudo crear el abonado.");
 
             var contratoAbonado = _mapper.Map<ContratoAbonado>(contratoAbonadoDto);
 
@@ -86,27 +74,28 @@ namespace ViteMontevideo_API.Controllers
 
         [HttpPut("{id}")]
         [ServiceFilter(typeof(ValidationFilterAttribute))]
-        public IActionResult Editar([FromRoute] int id, [FromBody] ContratoAbonadoRequestDto contratoAbonadoDto)
+        public IActionResult Editar([FromRoute] int id, [FromBody] ContratoAbonadoActualizarRequestDto contratoAbonadoDto)
         {
             var dbContratoAbonado = _dbContext.ContratosAbonados.Find(id) ?? throw new NotFoundException("Abonado no encontrado.");
 
-            var buscarVehiculo = _dbContext.Vehiculos.Find(contratoAbonadoDto.IdVehiculo) ?? throw new NotFoundException("Vehículo no encontrado.");
-
-            dbContratoAbonado.IdVehiculo = buscarVehiculo.IdVehiculo;
-            dbContratoAbonado.FechaInicio = contratoAbonadoDto.FechaInicio;
-            dbContratoAbonado.FechaFinal = contratoAbonadoDto.FechaFinal;
-            dbContratoAbonado.HoraInicio = contratoAbonadoDto.HoraInicio;
-            dbContratoAbonado.HoraFinal = contratoAbonadoDto.HoraFinal;
-            dbContratoAbonado.Monto = contratoAbonadoDto.Monto;
-            dbContratoAbonado.Observacion = string.IsNullOrWhiteSpace(contratoAbonadoDto.Observacion) ? null : contratoAbonadoDto.Observacion.Trim();
-
-            if (dbContratoAbonado.EstadoPago)
+            if(contratoAbonadoDto.IdVehiculo != null)
             {
-                if (contratoAbonadoDto.TipoPago == null)
-                    throw new BadRequestException("El tipo de pago no puede estar vacio si ya ha sido pagado.");
+                var vehiculoEncontrado = _dbContext.Vehiculos.Find(contratoAbonadoDto.IdVehiculo) ?? throw new NotFoundException("Vehículo no encontrado.");
 
-                dbContratoAbonado.TipoPago = contratoAbonadoDto.TipoPago;
+                var tieneServicioEnMarcha = _dbContext.Servicios.Any(s => s.IdVehiculo == contratoAbonadoDto.IdVehiculo && s.EstadoPago == false);
+
+                if(tieneServicioEnMarcha && !dbContratoAbonado.EstadoPago)
+                    throw new BadRequestException("Este vehículo tiene un servicio en marcha con modalidad de hora o turno. No se pudo actualizar el abonado.");
+
+                dbContratoAbonado.IdVehiculo = vehiculoEncontrado.IdVehiculo;
             }
+
+            dbContratoAbonado.FechaInicio = contratoAbonadoDto.FechaInicio ?? dbContratoAbonado.FechaInicio;
+            dbContratoAbonado.FechaFinal = contratoAbonadoDto.FechaFinal ?? dbContratoAbonado.FechaFinal;
+            dbContratoAbonado.HoraInicio = contratoAbonadoDto.HoraInicio ?? dbContratoAbonado.HoraInicio;
+            dbContratoAbonado.HoraFinal = contratoAbonadoDto.HoraFinal ?? dbContratoAbonado.HoraFinal;
+            dbContratoAbonado.Monto = contratoAbonadoDto.Monto ?? dbContratoAbonado.Monto;
+            dbContratoAbonado.Observacion = string.IsNullOrWhiteSpace(contratoAbonadoDto.Observacion) ? null : contratoAbonadoDto.Observacion.Trim();
 
             _dbContext.SaveChanges();
 
@@ -117,15 +106,12 @@ namespace ViteMontevideo_API.Controllers
 
         [HttpPatch("{id}/pagar")]
         [ServiceFilter(typeof(ValidationFilterAttribute))]
-        public IActionResult Pagar([FromRoute] int id, [FromBody] ContratoAbonadoRequestDto contratoAbonadoDto)
+        public IActionResult Pagar([FromRoute] int id, [FromBody] ContratoAbonadoPagarRequestDto contratoAbonadoDto)
         {
-            if (contratoAbonadoDto.FechaPago == null || contratoAbonadoDto.HoraPago == null || contratoAbonadoDto.TipoPago == null)
-                throw new BadRequestException("La fecha, hora y tipo de pago no pueden estar vacias.");
-
             var dbContratoAbonado = _dbContext.ContratosAbonados.Find(id) ?? throw new NotFoundException("Abonado no encontrado.");
 
             if (dbContratoAbonado.EstadoPago)
-                throw new BadRequestException("Este abonado ya ha sido pagado.");
+                throw new BadRequestException("Este abonado ya estaba pagado.");
 
             var cajaChicaAbierta = _dbContext.CajasChicas.FirstOrDefault(cc => cc.Estado == true) ?? throw new NotFoundException("No hay caja chica abierta.");
 
@@ -146,6 +132,9 @@ namespace ViteMontevideo_API.Controllers
         public IActionResult AnularPago([FromRoute] int id)
         {
             var dbContratoAbonado = _dbContext.ContratosAbonados.Find(id) ?? throw new NotFoundException("Abonado no encontrado.");
+
+            if (!dbContratoAbonado.EstadoPago)
+                throw new BadRequestException("El pago de este abonado ya estaba anulado.");
 
             dbContratoAbonado.IdCaja = null;
             dbContratoAbonado.FechaPago = null;

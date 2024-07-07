@@ -56,7 +56,7 @@ namespace ViteMontevideo_API.Controllers
             return Ok(new {cantidad = count, siguiente = nextCursor, data = vehiculos});
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{id:int}")]
         public IActionResult ObtenerPorId(int id)
         {
             var vehiculo = _dbContext.Vehiculos
@@ -70,18 +70,22 @@ namespace ViteMontevideo_API.Controllers
         [HttpGet("{placa}")]
         public IActionResult ObtenerPorPlaca(string placa)
         {
-            var vehiculoPorPlaca = _dbContext.Vehiculos
+            var vehiculo = _dbContext.Vehiculos
                 .AsNoTracking()
                 .ProjectTo<VehiculoResponseDto>(_mapper.ConfigurationProvider)
-                .FirstOrDefault(v => v.Placa == placa.ToUpper()) ?? throw new NotFoundException("Vehículo no encontrado.");
+                .FirstOrDefault(v => v.Placa == placa) ?? throw new NotFoundException("Vehículo no encontrado.");
 
-            return Ok(vehiculoPorPlaca);
+            return Ok(vehiculo);
         }
 
         [HttpPost]
         [ServiceFilter(typeof(ValidationFilterAttribute))]
-        public IActionResult Guardar(VehiculoRequestDto vehiculoDto)
+        public IActionResult Guardar(VehiculoCrearRequestDto vehiculoDto)
         {
+            var tarifaExiste = _dbContext.Tarifas.Any(t => t.IdTarifa == vehiculoDto.IdTarifa);
+            if (!tarifaExiste)
+                throw new NotFoundException("La tarifa que intento vincular al vehículo no existe.");
+
             if(vehiculoDto.IdCliente != null)
             {
                 bool existeCliente = _dbContext.Clientes.Any(c => c.IdCliente == vehiculoDto.IdCliente);
@@ -92,6 +96,9 @@ namespace ViteMontevideo_API.Controllers
             var existePlaca = _dbContext.Vehiculos.Any(v => v.Placa == vehiculoDto.Placa);
             if (existePlaca)
                 throw new ConflictException("La placa ya existe en otro vehículo.");
+
+            // Las placas siempre deben estar en mayúsculas.
+            vehiculoDto.Placa = vehiculoDto.Placa.ToUpper();
 
             var vehiculo = _mapper.Map<Vehiculo>(vehiculoDto);
 
@@ -105,28 +112,40 @@ namespace ViteMontevideo_API.Controllers
 
         [HttpPut("{id}")]
         [ServiceFilter(typeof(ValidationFilterAttribute))]
-        public IActionResult Editar([FromRoute] int id,[FromBody] VehiculoRequestDto vehiculoDto)
+        public IActionResult Editar(int id,[FromBody] VehiculoActualizarRequestDto vehiculoDto)
         {
-            if (vehiculoDto.IdCliente != null)
-            {
-                bool existeCliente = _dbContext.Clientes.Any(c => c.IdCliente == vehiculoDto.IdCliente);
-                if (!existeCliente)
-                    throw new NotFoundException("El cliente que intento vincular al vehículo no existe.");
-            }
-
+            using var transaction = _dbContext.Database.BeginTransaction();
             var dbVehiculo = _dbContext.Vehiculos.Find(id) ?? throw new NotFoundException("Vehículo no encontrado.");
 
             var existePlaca = _dbContext.Vehiculos.Any(v => v.Placa == vehiculoDto.Placa && v.IdVehiculo != id);
             if (existePlaca)
                 throw new ConflictException("La placa ya existe en otro vehículo.");
 
-            dbVehiculo.IdTarifa = vehiculoDto.IdTarifa;
-            dbVehiculo.IdCliente = vehiculoDto.IdCliente;
+            if (vehiculoDto.IdTarifa != null)
+            {
+                var tarifaExiste = _dbContext.Tarifas.Any(t => t.IdTarifa == vehiculoDto.IdTarifa);
+                if (!tarifaExiste)
+                    throw new NotFoundException("La tarifa que intento vincular al vehículo no existe.");
+                dbVehiculo.IdTarifa = (short)vehiculoDto.IdTarifa;
+            }
+
+            if (vehiculoDto.IdCliente != null)
+            {
+                bool existeCliente = _dbContext.Clientes.Any(c => c.IdCliente == vehiculoDto.IdCliente);
+                if (!existeCliente)
+                    throw new NotFoundException("El cliente que intento vincular al vehículo no existe.");
+                dbVehiculo.IdCliente = vehiculoDto.IdCliente;
+            }
+
             dbVehiculo.Placa = vehiculoDto.Placa.ToUpper();
 
             _dbContext.SaveChanges();
 
-            return Ok("Vehiculo actualizado");
+            transaction.Commit();
+
+            var response = ApiResponse.Success("El vehículo ha sido actualizado.");
+
+            return Ok(response);
         }
 
         [HttpDelete("{id}")]

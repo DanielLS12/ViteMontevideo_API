@@ -2,7 +2,7 @@
 
 namespace ViteMontevideo_API.Dtos.Clientes
 {
-    public class ClienteRequestDto
+    public class ClienteCrearRequestDto
     {
         [Required(ErrorMessage = "El campo nombres es obligatorio")]
         [RegularExpression(@"^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]+$", ErrorMessage = "El campo nombres solo puede contener letras.")]

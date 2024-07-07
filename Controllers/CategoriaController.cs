@@ -35,9 +35,9 @@ namespace ViteMontevideo_API.Controllers
         [HttpGet("{id}")]
         public IActionResult Obtener(short id)
         {
-            var actividad = _dbContext.Actividades
+            var actividad = _dbContext.Categorias
                 .AsNoTracking()
-                .SingleOrDefault(a => a.IdActividad == id) ?? throw new NotFoundException("Actividad no encontrada.");
+                .SingleOrDefault(a => a.IdCategoria == id) ?? throw new NotFoundException("Categoria no encontrada.");
             return Ok(actividad);
         }
 
@@ -62,7 +62,7 @@ namespace ViteMontevideo_API.Controllers
 
         [HttpPut("{id}")]
         [ServiceFilter(typeof(ValidationFilterAttribute))]
-        public IActionResult Editar([FromRoute] int id,[FromBody] Categoria categoria)
+        public IActionResult Editar([FromRoute] short id,[FromBody] Categoria categoria)
         {
             var dbCategoria = _dbContext.Categorias.Find(id) ?? throw new NotFoundException("Categoria no encontrada.");
 
@@ -83,7 +83,7 @@ namespace ViteMontevideo_API.Controllers
         }
 
         [HttpDelete("{id}")]
-        public IActionResult Eliminar(int id)
+        public IActionResult Eliminar(short id)
         {
             var dbCategoria = _dbContext.Categorias
                 .Include(c => c.Tarifas)

@@ -13,7 +13,7 @@ using ViteMontevideo_API.Middleware.Exceptions;
 namespace ViteMontevideo_API.Controllers
 {
     [EnableCors("ReglasCors")]
-    [Route("api/[controller]")]
+    [Route("auth/[controller]")]
     [ApiController]
     public class UsuarioController : ControllerBase
     {

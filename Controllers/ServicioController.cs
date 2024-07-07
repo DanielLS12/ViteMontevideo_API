@@ -30,7 +30,7 @@ namespace ViteMontevideo_API.Controllers
         [HttpGet]
         public IActionResult Listar([FromQuery] FiltroServicio fs)
         {
-            var query = _dbContext.Servicios.Include(v => v.OVehiculo).AsQueryable();
+            var query = _dbContext.Servicios.Include(v => v.Vehiculo).AsQueryable();
 
             query = query.Where(s => s.EstadoPago == fs.EstadoPago);
                 
@@ -45,29 +45,29 @@ namespace ViteMontevideo_API.Controllers
 
             if (!string.IsNullOrWhiteSpace(fs.Placa) && fs.Placa.Length >= 3)
             {
-                query = query.Where(s => s.OVehiculo.Placa.Contains(fs.Placa));
+                query = query.Where(s => s.Vehiculo.Placa.Contains(fs.Placa));
             }
 
             query = fs.Orden == "asc"
                 ? query.OrderBy(s => s.FechaEntrada).ThenBy(s => s.HoraEntrada)
                 : query.OrderByDescending(s => s.FechaEntrada).ThenByDescending(s => s.HoraEntrada);
 
-            var servicios = query
+            var data = query
                 .AsNoTracking()
                 .OrderByDescending(s => s.IdServicio)
                 .ProjectTo<ServicioResponseDto>(_mapper.ConfigurationProvider)
                 .ToList();
 
-            int totalRegistros = servicios.Count;
-            decimal totalMonto = servicios.Sum(s => s.Monto);
-            decimal totalDescuento = servicios.Sum(s => s.Descuento);
+            int cantidad = data.Count;
+            decimal totalMonto = data.Sum(s => s.Monto);
+            decimal totalDescuento = data.Sum(s => s.Descuento);
 
             var resultado = new
             {
-                TotalRegistros = totalRegistros,
-                TotalMonto = totalMonto,
-                TotalDescuento = totalDescuento,
-                Registros = servicios
+                cantidad,
+                totalMonto,
+                totalDescuento,
+                data,
             };
 
             return Ok(resultado);
@@ -89,19 +89,8 @@ namespace ViteMontevideo_API.Controllers
         {
             var servicio = _dbContext.Servicios
                 .AsNoTracking()
-                .Include(v => v.OVehiculo)
-                .Select(s => new
-                {
-                    s.IdServicio,
-                    s.IdVehiculo,
-                    s.OVehiculo.Placa,
-                    Modalidad = s.IdTarifa == null ? (s.OVehiculo.OTarifa.HoraDia == null ? "Hora" : "Turno") : (s.OTarifa.HoraDia == null ? "Hora" : "Turno"),
-                    s.FechaEntrada,
-                    s.HoraEntrada,
-                    s.Observacion,
-                    s.EstadoPago
-                })
-                .FirstOrDefault(s => s.Placa == placa.ToUpper() && s.EstadoPago == false) ??
+                .ProjectTo<ServicioResponseDto>(_mapper.ConfigurationProvider)
+                .FirstOrDefault(s => s.Vehiculo.Placa == placa.ToUpper() && s.EstadoPago == false) ??
                 throw new NotFoundException("Este vehiculo no se encuentra en el estacionamiento en este momento.");     
 
             return Ok(servicio);
@@ -111,19 +100,19 @@ namespace ViteMontevideo_API.Controllers
         public IActionResult GenerarMonto(int id)
         {
             var oServicio = _dbContext.Servicios
-                    .Include(v => v.OVehiculo)
-                        .ThenInclude(t => t.OTarifa)
+                    .Include(v => v.Vehiculo)
+                        .ThenInclude(t => t.Tarifa)
                     .FirstOrDefault(s => s.IdServicio == id) ?? throw new NotFoundException("Servicio no encontrado.");
 
-            bool EsHora = oServicio.OVehiculo.OTarifa.HoraDia == null;
+            bool EsHora = oServicio.Vehiculo.Tarifa.HoraDia == null;
 
             TimeZoneInfo zonaHorariaPeru = TimeZoneInfo.FindSystemTimeZoneById("SA Pacific Standard Time");
 
             DateTime fechaHoraEntrada = oServicio.FechaEntrada + oServicio.HoraEntrada, fechaHoraSalida = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, zonaHorariaPeru);
 
-            TimeSpan tolerancia = oServicio.OVehiculo.OTarifa.Tolerancia, estadia = fechaHoraSalida - fechaHoraEntrada;
+            TimeSpan tolerancia = oServicio.Vehiculo.Tarifa.Tolerancia, estadia = fechaHoraSalida - fechaHoraEntrada;
 
-            decimal precioDia = oServicio.OVehiculo.OTarifa.PrecioDia, precioNoche = oServicio.OVehiculo.OTarifa.PrecioNoche;
+            decimal precioDia = oServicio.Vehiculo.Tarifa.PrecioDia, precioNoche = oServicio.Vehiculo.Tarifa.PrecioNoche;
 
             if (EsHora)
             {
@@ -134,8 +123,8 @@ namespace ViteMontevideo_API.Controllers
             }
             else
             {
-                TimeSpan hora_dia = (TimeSpan)oServicio.OVehiculo.OTarifa.HoraDia,
-                            hora_noche = (TimeSpan)oServicio.OVehiculo.OTarifa.HoraNoche;
+                TimeSpan hora_dia = (TimeSpan)oServicio.Vehiculo.Tarifa.HoraDia,
+                            hora_noche = (TimeSpan)oServicio.Vehiculo.Tarifa.HoraNoche;
 
                 int dias = estadia.Days;
 
@@ -257,16 +246,15 @@ namespace ViteMontevideo_API.Controllers
 
         [HttpPost]
         [ServiceFilter(typeof(ValidationFilterAttribute))]
-        public IActionResult Guardar(ServicioRequestDto servicioDto)
+        public IActionResult Guardar(ServicioCrearRequestDto request)
         {
-            var vehiculo = _dbContext.Vehiculos.Find(servicioDto.IdVehiculo) ?? throw new NotFoundException("Vehículo no encontrado.");
+            var vehiculo = _dbContext.Vehiculos.Find(request.IdVehiculo) ?? throw new NotFoundException("Vehículo no encontrado.");
 
-            bool vehiculoConEntrada = _dbContext.Servicios.Any(s => s.EstadoPago == false && s.IdVehiculo == servicioDto.IdVehiculo);
-
+            bool vehiculoConEntrada = _dbContext.Servicios.Any(s => s.EstadoPago == false && s.IdVehiculo == request.IdVehiculo);
             if (vehiculoConEntrada) 
                 throw new BadRequestException("El vehículo aún está en el estacionamiento. No se puede crear otra entrada.");
 
-            var servicio = _mapper.Map<Servicio>(servicioDto);
+            var servicio = _mapper.Map<Servicio>(request);
             _dbContext.Servicios.Add(servicio);
             _dbContext.SaveChanges();
 
@@ -275,43 +263,26 @@ namespace ViteMontevideo_API.Controllers
             return CreatedAtAction(nameof(Obtener),new {id = servicio.IdServicio},response);
         }
 
-        [HttpPut("{id}")]
+        [HttpPatch("{id}")]
         [ServiceFilter(typeof(ValidationFilterAttribute))]
-        public IActionResult Editar([FromRoute] int id,[FromBody] ServicioRequestDto servicio) 
+        public IActionResult Editar(int id,[FromBody] ServicioActualizarRequestDto request) 
         {
-            if (servicio.Descuento > servicio.Monto || servicio.Descuento < 0)
-                throw new BadRequestException("El descuento no puede ser mayor al monto o valor negativo.");
-
             var dbServicio = _dbContext.Servicios.Find(id) ?? throw new NotFoundException("Servicio no encontrado.");
 
-            var dbVehiculo = _dbContext.Vehiculos.Find(servicio.IdVehiculo) ?? throw new NotFoundException("Vehículo no encontrado.");
+            if (dbServicio.Monto < request.Descuento)
+                throw new BadRequestException("El descuento no puede ser mayor que el monto.");
 
-            dbServicio.IdVehiculo = dbVehiculo.IdVehiculo;
-            dbServicio.IdTarifa = servicio.EstadoPago ? dbVehiculo.IdTarifa : null;
-            dbServicio.IdCaja = null;
-            dbServicio.FechaEntrada = servicio.FechaEntrada;
-            dbServicio.HoraEntrada = servicio.HoraEntrada;
-            dbServicio.FechaSalida = null;
-            dbServicio.HoraSalida = null;
-            dbServicio.TipoPago = null;
-            dbServicio.Monto = servicio.Monto;
-            dbServicio.Descuento = servicio.Descuento;
-            dbServicio.Observacion = string.IsNullOrWhiteSpace(servicio.Observacion) ? null : servicio.Observacion.Trim();
-            dbServicio.EstadoPago = servicio.EstadoPago;
-
-            if (servicio.EstadoPago)
+            if(request.IdVehiculo != null)
             {
-                if (servicio.FechaSalida == null || servicio.HoraSalida == null || servicio.TipoPago == null)
-                    throw new BadRequestException("La fecha y hora de salida, y el tipo de pago no pueden estar vacios.");
-
-                dbServicio.FechaSalida = servicio.FechaSalida;
-                dbServicio.HoraSalida = servicio.HoraSalida;
-                dbServicio.TipoPago = servicio.TipoPago;
-
-                var cajaChicaAbierta = _dbContext.CajasChicas.FirstOrDefault(cc => cc.Estado == true) ?? throw new NotFoundException("No hay caja chica abierta.");
-
-                dbServicio.IdCaja = cajaChicaAbierta.IdCaja;
+                var dbVehiculo = _dbContext.Vehiculos.Find(request.IdVehiculo) ?? throw new NotFoundException("Vehículo no encontrado.");
+                dbServicio.IdVehiculo = dbVehiculo.IdVehiculo;
             }
+
+            if (dbServicio.EstadoPago)
+                dbServicio.TipoPago = request.TipoPago ?? dbServicio.TipoPago;
+
+            dbServicio.Descuento = request.Descuento ?? dbServicio.Descuento;
+            dbServicio.Observacion = string.IsNullOrWhiteSpace(request.Observacion) ? null : request.Observacion.Trim();
 
             _dbContext.SaveChanges();
 
@@ -322,33 +293,30 @@ namespace ViteMontevideo_API.Controllers
 
         [HttpPatch("{placa}/pagar")]
         [ServiceFilter(typeof(ValidationFilterAttribute))]
-        public IActionResult Pagar([FromRoute] string placa, [FromBody] ServicioRequestDto servicio)
+        public IActionResult Pagar(string placa, [FromBody] ServicioPagarRequestDto request)
         {
-            if (string.IsNullOrWhiteSpace(placa) || placa.Length != 6)
-                throw new BadRequestException("La placa no puede estar vacia y tiene que tener 6 caracteres.");
-
-            if (servicio.Descuento > servicio.Monto || servicio.Descuento < 0)
-                throw new BadRequestException("El descuento no puede ser mayor al monto o valor negativo.");
-
-            if (servicio.FechaSalida == null || servicio.HoraSalida == null || servicio.TipoPago == null)
-                throw new BadRequestException("La fecha y hora de salida, y el tipo de pago no pueden estar vacios.");
+            if (request.Monto <= request.Descuento)
+                throw new BadRequestException("El descuento no puede ser mayor o igual al monto.");
 
             var cajaChicaAbierta = _dbContext.CajasChicas.FirstOrDefault(cc => cc.Estado == true) ?? throw new NotFoundException("No hay caja chica abierta.");
 
+            if (cajaChicaAbierta.FechaInicio > request.FechaSalida)
+                throw new BadRequestException($"La fecha de salida del servicio debe ser igual o mayor a la fecha de inicio ({cajaChicaAbierta.FechaInicio.ToShortDateString()}) de la caja chica.");
+
             var dbServicio = _dbContext.Servicios
-                                .Include(s => s.OVehiculo)
-                                .FirstOrDefault(s => s.OVehiculo.Placa == placa.Trim() && s.EstadoPago == false) ?? throw new NotFoundException("Este vehículo no se encuentra en el estacionamiento.");
+                                .Include(s => s.Vehiculo)
+                                .FirstOrDefault(s => s.Vehiculo.Placa == placa.Trim() && s.EstadoPago == false) ?? throw new NotFoundException("Este vehículo no se encuentra en el estacionamiento.");
 
             if (dbServicio.EstadoPago)
                 throw new BadRequestException("Este servicio ya ha sido pagado.");
 
-            dbServicio.IdTarifa = dbServicio.OVehiculo.IdTarifa;
+            dbServicio.IdTarifa = dbServicio.Vehiculo.IdTarifa;
             dbServicio.IdCaja = cajaChicaAbierta.IdCaja;
-            dbServicio.FechaSalida = servicio.FechaSalida;
-            dbServicio.HoraSalida = servicio.HoraSalida;
-            dbServicio.Monto = servicio.Monto;
-            dbServicio.Descuento = servicio.Descuento;
-            dbServicio.TipoPago = servicio.TipoPago;
+            dbServicio.FechaSalida = request.FechaSalida;
+            dbServicio.HoraSalida = request.HoraSalida;
+            dbServicio.Monto = request.Monto;
+            dbServicio.Descuento = request.Descuento;
+            dbServicio.TipoPago = request.TipoPago;
             dbServicio.EstadoPago = true;
 
             _dbContext.SaveChanges();

@@ -14,8 +14,8 @@ public partial class Tarifa
     [Column("hora_noche")]
     public TimeSpan? HoraNoche { get; set; }
     public TimeSpan Tolerancia { get; set; }
-    public virtual Actividad OActividad { get; set; } = null!;
-    public virtual Categoria OCategoria { get; set; } = null!;
+    public virtual Actividad Actividad { get; set; } = null!;
+    public virtual Categoria Categoria { get; set; } = null!;
     public virtual ICollection<Vehiculo> Vehiculos { get; set; } = new List<Vehiculo>();
     public virtual ICollection<Servicio> Servicios { get; set; } = new List<Servicio>();
 }

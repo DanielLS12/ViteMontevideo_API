@@ -7,7 +7,7 @@ namespace ViteMontevideo_API.Dtos.Vehiculos
     {
         public int IdVehiculo { get; set; }
         public string Placa { get; set; } = null!;
-        public virtual TarifaResponseDto OTarifa { get; set; } = null!;
-        public virtual ClienteDto? OCliente { get; set; }
+        public virtual TarifaResponseDto Tarifa { get; set; } = null!;
+        public virtual ClienteDto? Cliente { get; set; }
     }
 }

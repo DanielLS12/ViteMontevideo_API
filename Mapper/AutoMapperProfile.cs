@@ -19,44 +19,44 @@ namespace ViteMontevideo_API.Mapper
         public AutoMapperProfile() 
         {
             // Cajas Chicas
-            CreateMap<CajaChicaRequestDto, CajaChica>();
+            CreateMap<CajaChicaCrearRequestDto, CajaChica>();
             CreateMap<CajaChica, CajaChicaResponseDto>();
 
             // Clientes
             CreateMap<Cliente, ClienteDto>();
-            CreateMap<ClienteRequestDto, Cliente>();
+            CreateMap<ClienteCrearRequestDto, Cliente>();
             CreateMap<Cliente, ClienteResponseDto>()
                     .ForMember(dest => dest.NumeroVehiculos, opt => opt.MapFrom(src => src.Vehiculos.Count))
                     .ForMember(dest => dest.NumeroComerciosAdicionales, opt => opt.MapFrom(src => src.ComerciosAdicinales.Count));
 
             // Comercios Adicionales
-            CreateMap<ComercioAdicionalRequestDto, ComercioAdicional>();
+            CreateMap<ComercioAdicionalCrearRequestDto, ComercioAdicional>();
             CreateMap<ComercioAdicional, ComercioAdicionalResponseDto>();
 
             // Contratos Abonado
-            CreateMap<ContratoAbonadoRequestDto, ContratoAbonado>();
+            CreateMap<ContratoAbonadoCrearRequestDto, ContratoAbonado>();
             CreateMap<ContratoAbonado, ContratoAbonadoResponseDto>();
 
             // Egresos
-            CreateMap<EgresoRequestDto, Egreso>();
+            CreateMap<EgresoCrearRequestDto, Egreso>();
             CreateMap<Egreso, EgresoResponseDto>();
 
             // Servicios
-            CreateMap<Servicio, ServicioRequestDto>();
+            CreateMap<Servicio, ServicioCrearRequestDto>();
 
             // Tarifas
-            CreateMap<TarifaRequestDto, Tarifa>();
+            CreateMap<TarifaCrearRequestDto, Tarifa>();
             CreateMap<Tarifa,TarifaResponseDto>();
 
             // Trabajadores
-            CreateMap<TrabajadorRequestDto, Trabajador>();
+            CreateMap<TrabajadorCrearRequestDto, Trabajador>();
             CreateMap<Trabajador, TrabajadorResponseDto>();
 
             // Usuarios
             CreateMap<Usuario, UsuarioDto>();
 
             // Vehiculos
-            CreateMap<VehiculoRequestDto, Vehiculo>();
+            CreateMap<VehiculoCrearRequestDto, Vehiculo>();
             CreateMap<Vehiculo, VehiculoResponseDto>();
             CreateMap<Vehiculo, VehiculoSimplificadoDto>();
         }

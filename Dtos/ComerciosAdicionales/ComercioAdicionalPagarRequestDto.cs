@@ -3,24 +3,16 @@ using ViteMontevideo_API.Models;
 
 namespace ViteMontevideo_API.Dtos.ComerciosAdicionales
 {
-    public class ComercioAdicionalRequestDto
+    public class ComercioAdicionalPagarRequestDto
     {
-        public int? IdCaja { get; set; }
-
-        public int IdCliente { get; set; }
-
-        public string TipoComercioAdicional { get; set; } = null!;
-
-        [Range(0.01, double.MaxValue, ErrorMessage = "El monto debe ser mayor que cero.")]
-        public decimal Monto { get; set; }
-
+        [Required(ErrorMessage = "El campo fecha pago es requerido.")]
         public DateTime? FechaPago { get; set; }
 
+        [Required(ErrorMessage = "El campo hora pago es requerido.")]
         public TimeSpan? HoraPago { get; set; }
 
+        [Required(ErrorMessage = "El campo tipo pago es requerido.")]
         [EnumDataType(typeof(TipoPago), ErrorMessage = "El tipo de pago ingresado no es válido.")]
         public string? TipoPago { get; set; }
-
-        public string? Observacion { get; set; }
     }
 }

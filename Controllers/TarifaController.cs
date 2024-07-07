@@ -4,6 +4,7 @@ using AutoMapper.QueryableExtensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Data.Common;
 using ViteMontevideo_API.ActionFilters;
 using ViteMontevideo_API.Dtos.Common;
 using ViteMontevideo_API.Dtos.Tarifas;
@@ -29,17 +30,19 @@ namespace ViteMontevideo_API.Controllers
         [HttpGet]
         public IActionResult Listar()
         {
-            var tarifas = _dbContext.Tarifas
+            var data = _dbContext.Tarifas
                 .AsNoTracking()
                 .OrderByDescending(c => c.IdTarifa)
                 .ProjectTo<TarifaResponseDto>(_mapper.ConfigurationProvider)
                 .ToList();
 
-            return Ok(tarifas);
+            int cantidad = data.Count;
+
+            return Ok(new DataResponse<TarifaResponseDto>(cantidad,data));
         }
 
         [HttpGet("{id}")]
-        public IActionResult Obtener(int id)
+        public IActionResult Obtener(short id)
         {
             var tarifa = _dbContext.Tarifas
                 .AsNoTracking()
@@ -51,8 +54,27 @@ namespace ViteMontevideo_API.Controllers
 
         [HttpPost]
         [ServiceFilter(typeof(ValidationFilterAttribute))]
-        public IActionResult Guardar(TarifaRequestDto tarifaDto)
+        public IActionResult Guardar(TarifaCrearRequestDto tarifaDto)
         {
+            var categoria = _dbContext.Categorias.Find(tarifaDto.IdCategoria) ?? throw new NotFoundException("Categoria no encontrada.");
+
+            var actividad = _dbContext.Actividades.Find(tarifaDto.IdActividad) ?? throw new NotFoundException("Actividad no encontrada.");
+
+            if ((tarifaDto.HoraDia.HasValue && !tarifaDto.HoraNoche.HasValue) || (!tarifaDto.HoraDia.HasValue && tarifaDto.HoraNoche.HasValue))
+                throw new BadRequestException("Si hora día tiene valor, entonces hora noche también debe tenerlo, y viceversa.");
+
+            if(tarifaDto.HoraDia.HasValue && tarifaDto.HoraNoche.HasValue)
+            {
+                if (tarifaDto.HoraDia >= tarifaDto.HoraNoche)
+                    throw new BadRequestException("La hora día no puede ser mayor o igual a la hora noche.");
+            }
+
+            if(!tarifaDto.HoraDia.HasValue && !tarifaDto.HoraNoche.HasValue)
+            {
+                if (tarifaDto.PrecioDia != tarifaDto.PrecioNoche)
+                    throw new BadRequestException("Si no existen horas día y noche es porque tiene la modalidad de 'Hora', por lo tanto, sus precios deben ser iguales.");
+            }
+
             if (TarifaYaExiste(tarifaDto))
                 throw new BadRequestException("La tarifa ya existe.");
 
@@ -68,22 +90,43 @@ namespace ViteMontevideo_API.Controllers
 
         [HttpPut("{id}")]
         [ServiceFilter(typeof(ValidationFilterAttribute))]
-        public IActionResult Editar([FromRoute] int id,[FromBody] TarifaRequestDto tarifaDto)
+        public IActionResult Editar([FromRoute] short id, [FromBody] TarifaActualizarRequestDto tarifaDto)
         {
+            using var transaction = _dbContext.Database.BeginTransaction();
             var dbTarifa = _dbContext.Tarifas.Find(id) ?? throw new NotFoundException("Tarifa no encontrada.");
 
-            if (TarifaYaExiste(tarifaDto, id))
-                throw new BadRequestException("Esta tarifa ya existe.");
+            if ((tarifaDto.HoraDia.HasValue && !tarifaDto.HoraNoche.HasValue) || (!tarifaDto.HoraDia.HasValue && tarifaDto.HoraNoche.HasValue))
+                throw new BadRequestException("Si hora día tiene valor, entonces hora noche también debe tenerlo, y viceversa.");
 
-            dbTarifa.IdCategoria = tarifaDto.IdCategoria;
-            dbTarifa.IdActividad = tarifaDto.IdActividad;
-            dbTarifa.PrecioDia = tarifaDto.PrecioDia;
-            dbTarifa.PrecioNoche = tarifaDto.PrecioNoche;
+            if (tarifaDto.HoraDia.HasValue && tarifaDto.HoraNoche.HasValue)
+            {
+                if (tarifaDto.HoraDia >= tarifaDto.HoraNoche)
+                    throw new BadRequestException("La hora día no puede ser mayor o igual a la hora noche.");
+            }
+
+            if (!tarifaDto.HoraDia.HasValue && !tarifaDto.HoraNoche.HasValue)
+            {
+                if (tarifaDto.PrecioDia != tarifaDto.PrecioNoche)
+                    throw new BadRequestException("Si no existen horas día y noche es porque tiene la modalidad de 'Hora', por lo tanto, sus precios deben ser iguales.");
+            }
+
+            dbTarifa.PrecioDia = tarifaDto.PrecioDia ?? dbTarifa.PrecioDia;
+            dbTarifa.PrecioNoche = tarifaDto.PrecioNoche ?? dbTarifa.PrecioNoche;
             dbTarifa.HoraDia = tarifaDto.HoraDia;
             dbTarifa.HoraNoche = tarifaDto.HoraNoche;
-            dbTarifa.Tolerancia = tarifaDto.Tolerancia;
+            dbTarifa.Tolerancia = tarifaDto.Tolerancia ?? dbTarifa.Tolerancia;
+
+            var existeTarifa = TarifaYaExiste(dbTarifa, dbTarifa.IdTarifa);
+
+            if (existeTarifa)
+            {
+                transaction.Rollback();
+                throw new BadRequestException("La tarifa ya existe");
+            }
 
             _dbContext.SaveChanges();
+
+            transaction.Commit();
 
             var response = ApiResponse.Success("La tarifa ha sido actualizada.");
 
@@ -110,10 +153,9 @@ namespace ViteMontevideo_API.Controllers
             return Ok(response);
         }
 
-        private bool TarifaYaExiste(TarifaRequestDto tarifa, int? tarifaId = null)
+        private bool TarifaYaExiste(TarifaCrearRequestDto tarifa)
         {
-            var existeTarifa = _dbContext.Tarifas.FirstOrDefault(t =>
-                            t.IdTarifa != tarifaId &&
+            var existeTarifa = _dbContext.Tarifas.Any(t =>
                             t.IdCategoria == tarifa.IdCategoria &&
                             t.IdActividad == tarifa.IdActividad &&
                             (
@@ -121,7 +163,21 @@ namespace ViteMontevideo_API.Controllers
                                 (t.HoraDia != null && tarifa.HoraDia != null)
                             ));
 
-            return existeTarifa != null;
+            return existeTarifa;
+        }
+
+        private bool TarifaYaExiste(Tarifa tarifa, int id)
+        {
+            var existeTarifa = _dbContext.Tarifas.Any(t =>
+                t.IdTarifa != id &&
+                t.IdCategoria == tarifa.IdCategoria &&
+                t.IdActividad == tarifa.IdActividad &&
+                (
+                    (t.HoraDia == null && tarifa.HoraDia == null) ||
+                    (t.HoraDia != null && tarifa.HoraDia != null)
+                ));
+
+            return existeTarifa;
         }
     }
 }

@@ -21,7 +21,7 @@ public partial class ComercioAdicional
     public TimeSpan? HoraPago { get; set; }
     public string? TipoPago { get; set; }
     public string? Observacion { get; set; }
-    public virtual Cliente OCliente { get; set; } = null!;
-    public virtual CajaChica? OCajaChica { get; set; } = null!;
+    public virtual Cliente Cliente { get; set; } = null!;
+    public virtual CajaChica? CajaChica { get; set; } = null!;
 }
 

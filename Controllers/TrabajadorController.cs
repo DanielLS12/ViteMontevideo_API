@@ -3,11 +3,14 @@ using AutoMapper.QueryableExtensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
+using System.Text.RegularExpressions;
 using ViteMontevideo_API.ActionFilters;
 using ViteMontevideo_API.Dtos.Common;
 using ViteMontevideo_API.Dtos.Trabajadores;
 using ViteMontevideo_API.Middleware.Exceptions;
 using ViteMontevideo_API.models;
+using ViteMontevideo_API.Models;
 
 namespace ViteMontevideo_API.Controllers
 {
@@ -28,38 +31,63 @@ namespace ViteMontevideo_API.Controllers
         [HttpGet]
         public IActionResult Listar() 
         {
-            var trabajadores = _dbContext.Trabajadores
+            var data = _dbContext.Trabajadores
                 .AsNoTracking()
                 .OrderByDescending(c => c.IdTrabajador)
                 .ProjectTo<TrabajadorResponseDto>(_mapper.ConfigurationProvider)
                 .ToList();
 
-            return Ok(trabajadores);
+            int cantidad = data.Count;
+
+            return Ok(new DataResponse<TrabajadorResponseDto>(cantidad,data));
         }
 
         [HttpGet("{id}")]
-        public IActionResult Obtener(int id_trabajador)
+        public IActionResult Obtener(short id)
         {
             var trabajador = _dbContext.Trabajadores
                 .AsNoTracking()
                 .ProjectTo<TrabajadorResponseDto>(_mapper.ConfigurationProvider)
-                .FirstOrDefault(u => u.IdTrabajador == id_trabajador);
+                .FirstOrDefault(u => u.IdTrabajador == id) ?? throw new NotFoundException("Trabajador no encontrado.");
 
             return Ok(trabajador);
         }
 
         [HttpPost]
         [ServiceFilter(typeof(ValidationFilterAttribute))]
-        public IActionResult Guardar(TrabajadorRequestDto trabajadorDto)
+        public IActionResult Guardar(TrabajadorCrearRequestDto trabajadorDto)
         {
             var cargo = _dbContext.Cargos.Find(trabajadorDto.IdCargo) ?? throw new NotFoundException("Cargo no encontrado.");
 
+            var dniDuplicado = _dbContext.Trabajadores.Any(t => t.Dni == trabajadorDto.Dni);
+
+            if (dniDuplicado)
+                throw new ConflictException("Este dni ya se encuentra en otro trabajador.");
+
+            trabajadorDto = LimpiarDatos(trabajadorDto);
+
+            if(trabajadorDto.Correo != null)
+            {
+                var correoDuplicado = _dbContext.Trabajadores.Any(t => t.Correo == trabajadorDto.Correo);
+                if (correoDuplicado)
+                    throw new ConflictException("Este correo ya se encuentra en otro trabajador");
+            }
+
+            if (trabajadorDto.Telefono != null)
+            {
+                var telefonoDuplicado = _dbContext.Trabajadores.Any(t => t.Telefono == trabajadorDto.Telefono);
+                if (telefonoDuplicado)
+                    throw new ConflictException("Este número de teléfono ya se encuentra en otro trabajador");
+            }
+
             trabajadorDto.IdCargo = cargo.IdCargo;
-            trabajadorDto.Nombre = trabajadorDto.Nombre.Trim();
-            trabajadorDto.ApellidoPaterno = trabajadorDto.ApellidoPaterno.Trim();
-            trabajadorDto.ApellidoMaterno = trabajadorDto.ApellidoMaterno.Trim();
+            trabajadorDto.Nombre = trabajadorDto.Nombre;
+            trabajadorDto.ApellidoPaterno = trabajadorDto.ApellidoPaterno;
+            trabajadorDto.ApellidoMaterno = trabajadorDto.ApellidoMaterno;
 
             var trabajador = _mapper.Map<Trabajador>(trabajadorDto);
+
+            trabajador.Estado = true;
 
             _dbContext.Trabajadores.Add(trabajador);
             _dbContext.SaveChanges();
@@ -71,20 +99,47 @@ namespace ViteMontevideo_API.Controllers
 
         [HttpPut("{id}")]
         [ServiceFilter(typeof(ValidationFilterAttribute))]
-        public IActionResult Editar([FromRoute] int id,[FromBody] TrabajadorRequestDto trabajadorDto)
+        public IActionResult Editar([FromRoute] short id,[FromBody] TrabajadorActualizarRequestDto trabajadorDto)
         {
             var dbTrabajador = _dbContext.Trabajadores.Find(id) ?? throw new NotFoundException("Trabajador no encontrado.");
 
-            var dbCargo = _dbContext.Cargos.Find(trabajadorDto.IdCargo) ?? throw new NotFoundException("Cargo no encontrado.");
+            if(trabajadorDto.IdCargo != null)
+            {
+                var dbCargo = _dbContext.Cargos.Find(trabajadorDto.IdCargo) ?? throw new NotFoundException("Cargo no encontrado.");
+                dbTrabajador.IdCargo = dbCargo.IdCargo;
+            }
 
-            dbTrabajador.IdCargo = dbCargo.IdCargo;
-            dbTrabajador.Nombre = trabajadorDto.Nombre.Trim();
-            dbTrabajador.ApellidoPaterno = trabajadorDto.ApellidoPaterno.Trim();
-            dbTrabajador.ApellidoMaterno = trabajadorDto.ApellidoMaterno.Trim();
-            dbTrabajador.Correo = string.IsNullOrWhiteSpace(trabajadorDto.Correo) ? null : trabajadorDto.Correo.Trim();
-            dbTrabajador.Telefono = string.IsNullOrWhiteSpace(trabajadorDto.Telefono) ? null : trabajadorDto.Telefono.Trim();
-            dbTrabajador.Dni = trabajadorDto.Dni;
-            dbTrabajador.Estado = trabajadorDto.Estado;
+            if(trabajadorDto.Dni != null)
+            {
+                var dniDuplicado = _dbContext.Trabajadores.Any(t => t.Dni == trabajadorDto.Dni && t.IdTrabajador != id);
+
+                if (dniDuplicado)
+                    throw new ConflictException("Este dni ya se encuentra en otro trabajador.");
+            }
+
+            trabajadorDto = LimpiarDatos(trabajadorDto);
+
+            if (trabajadorDto.Correo != null)
+            {
+                var correoDuplicado = _dbContext.Trabajadores.Any(t => t.Correo == trabajadorDto.Correo && t.IdTrabajador != id);
+                if (correoDuplicado)
+                    throw new ConflictException("Este correo ya se encuentra en otro trabajador");
+            }
+
+            if (trabajadorDto.Telefono != null)
+            {
+                var telefonoDuplicado = _dbContext.Trabajadores.Any(t => t.Telefono == trabajadorDto.Telefono && t.IdTrabajador != id);
+                if (telefonoDuplicado)
+                    throw new ConflictException("Este número de teléfono ya se encuentra en otro trabajador");
+            }
+
+            dbTrabajador.Nombre = trabajadorDto.Nombre ?? dbTrabajador.Nombre;
+            dbTrabajador.ApellidoPaterno = trabajadorDto.ApellidoPaterno ?? dbTrabajador.ApellidoPaterno;
+            dbTrabajador.ApellidoMaterno = trabajadorDto.ApellidoMaterno ?? dbTrabajador.ApellidoMaterno;
+            dbTrabajador.Correo = string.IsNullOrWhiteSpace(trabajadorDto.Correo) ? null : trabajadorDto.Correo;
+            dbTrabajador.Telefono = string.IsNullOrWhiteSpace(trabajadorDto.Telefono) ? null : trabajadorDto.Telefono;
+            dbTrabajador.Dni = trabajadorDto.Dni ?? dbTrabajador.Dni;
+            dbTrabajador.Estado = trabajadorDto.Estado ?? dbTrabajador.Estado;
 
             _dbContext.SaveChanges();
 
@@ -94,7 +149,7 @@ namespace ViteMontevideo_API.Controllers
         }
 
         [HttpDelete("{id}")]
-        public IActionResult Eliminar(int id)
+        public IActionResult Eliminar(short id)
         {
             var trabajador = _dbContext.Trabajadores.Find(id) ?? throw new NotFoundException("Trabajador no encontrado.");
 
@@ -109,6 +164,41 @@ namespace ViteMontevideo_API.Controllers
             var response = ApiResponse.Success("El trabajador ha sido eliminado.");
 
             return Ok(response);
+        }
+
+        private static TrabajadorCrearRequestDto LimpiarDatos(TrabajadorCrearRequestDto trabajador)
+        {
+            trabajador.Nombre = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Regex.Replace(trabajador.Nombre, @"\s+", " ").Trim());
+            trabajador.ApellidoPaterno = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Regex.Replace(trabajador.ApellidoPaterno, @"\s+", " ").Trim());
+            trabajador.ApellidoMaterno = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Regex.Replace(trabajador.ApellidoMaterno, @"\s+", " ").Trim());
+
+            if (trabajador.Telefono != null) 
+                trabajador.Telefono = Regex.Replace(trabajador.Telefono, @"\s+", " ");
+
+            if (trabajador.Correo != null) 
+                trabajador.Correo = Regex.Replace(trabajador.Correo, @"\s+", "").Trim();
+
+            return trabajador;
+        }
+
+        private static TrabajadorActualizarRequestDto LimpiarDatos(TrabajadorActualizarRequestDto trabajador)
+        {
+            if(trabajador.Nombre != null)
+                trabajador.Nombre = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Regex.Replace(trabajador.Nombre, @"\s+", " ").Trim());
+
+            if(trabajador.ApellidoPaterno != null)
+                trabajador.ApellidoPaterno = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Regex.Replace(trabajador.ApellidoPaterno, @"\s+", " ").Trim());
+
+            if(trabajador.ApellidoMaterno != null)
+                trabajador.ApellidoMaterno = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Regex.Replace(trabajador.ApellidoMaterno, @"\s+", " ").Trim());
+
+            if (trabajador.Telefono != null) 
+                trabajador.Telefono = Regex.Replace(trabajador.Telefono, @"\s+", " ");
+
+            if (trabajador.Correo != null) 
+                trabajador.Correo = Regex.Replace(trabajador.Correo, @"\s+", "").Trim();
+
+            return trabajador;
         }
     }
 }

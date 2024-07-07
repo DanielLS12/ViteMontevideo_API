@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ViteMontevideo_API.ActionFilters;
 using ViteMontevideo_API.Dtos.CajasChicas;
+using ViteMontevideo_API.Dtos.CajasChicas.Filtros;
 using ViteMontevideo_API.Dtos.Common;
 using ViteMontevideo_API.Middleware.Exceptions;
 using ViteMontevideo_API.models;
@@ -27,46 +28,36 @@ namespace ViteMontevideo_API.Controllers
         }
 
         [HttpGet]
-        public IActionResult Listar(DateTime? fechaInicio, DateTime? fechaFinal, string? turno)
+        public IActionResult Listar([FromQuery] FiltroCajaChica filtro)
         {
             var query = _dbContext.CajasChicas.AsQueryable();
 
-            // Aplicar los filtros si están presentes
-            if (fechaInicio.HasValue && fechaFinal.HasValue)
+            query = query.Where(c => c.FechaInicio >= filtro.FechaInicio && c.FechaInicio <= filtro.FechaFinal);
+
+            if (!string.IsNullOrWhiteSpace(filtro.Turno))
             {
-                query = query.Where(c => c.FechaInicio >= fechaInicio.Value && c.FechaInicio <= fechaFinal.Value);
-            }
-            else if (fechaInicio.HasValue)
-            {
-                query = query.Where(c => c.FechaInicio >= fechaInicio.Value);
-            }
-            else if (fechaFinal.HasValue)
-            {
-                query = query.Where(c => c.FechaInicio <= fechaFinal.Value);
+                query = query.Where(c => c.Turno.Contains(filtro.Turno));
             }
 
-            if (!string.IsNullOrEmpty(turno))
-            {
-                query = query.Where(c => c.Turno.Contains(turno));
-            }
+            var data = query
+                .AsNoTracking()
+                .OrderByDescending(caja => caja.IdCaja)
+                .ProjectTo<CajaChicaResponseDto>(_mapper.ConfigurationProvider)
+                .ToList();
 
-            var cajasChicas = query
-                                .AsNoTracking()
-                                .OrderByDescending(caja => caja.IdCaja)
-                                .ProjectTo<CajaChicaResponseDto>(_mapper.ConfigurationProvider)
-                                .ToList();
+            int cantidad = data.Count;
 
-            return Ok(cajasChicas);
+            return Ok(new DataResponse<CajaChicaResponseDto>(cantidad, data));
         }
 
         [HttpGet("{id}")]
         public IActionResult Obtener(int id)
         {
             var cajaChica = _dbContext.CajasChicas
-                                .AsNoTracking()
-                                .OrderByDescending(caja => caja.IdCaja)
-                                .ProjectTo<CajaChicaResponseDto>(_mapper.ConfigurationProvider)
-                                .SingleOrDefault(c => c.IdCaja == id) ?? throw new NotFoundException("Caja Chica no encontrada.");
+                .AsNoTracking()
+                .OrderByDescending(caja => caja.IdCaja)
+                .ProjectTo<CajaChicaResponseDto>(_mapper.ConfigurationProvider)
+                .SingleOrDefault(c => c.IdCaja == id) ?? throw new NotFoundException("Caja Chica no encontrada.");
 
             return Ok(cajaChica);
         }
@@ -76,22 +67,22 @@ namespace ViteMontevideo_API.Controllers
         {
             var informes = _dbContext.CajasChicas
                         .AsNoTracking()
-                        .Include(c => c.OTrabajador)
+                        .Include(c => c.Trabajador)
                         .Include(c => c.Servicios)
-                            .ThenInclude(t => t.OTarifa)
-                                .ThenInclude(a => a.OActividad)
+                            .ThenInclude(t => t.Tarifa)
+                                .ThenInclude(a => a.Actividad)
                         .Include(c => c.Egresos)
                         .Include(c => c.ContratosAbonados)
-                            .ThenInclude(c => c.OVehiculo)
+                            .ThenInclude(c => c.Vehiculo)
                         .Include(c => c.ComerciosAdicionales)
-                            .ThenInclude(c => c.OCliente)
+                            .ThenInclude(c => c.Cliente)
                         .Where(c => c.FechaInicio == fecha)
                         .Select(cajaChica => new InformeCajaChica
                         {
-                            Cajero = $"{cajaChica.OTrabajador.Nombre} {cajaChica.OTrabajador.ApellidoPaterno} {cajaChica.OTrabajador.ApellidoMaterno}",
-                            MParticulares = cajaChica.Servicios.Where(s => s.OTarifa.OActividad.Nombre == "Particular").Sum(s => s.Monto),
-                            MTurnos = cajaChica.Servicios.Where(s => s.OTarifa.HoraDia != null && s.OTarifa.OActividad.Nombre != "EsSalud").Sum(s => s.Monto),
-                            MEsSalud = cajaChica.Servicios.Where(s => s.OTarifa.OActividad.Nombre == "EsSalud").Sum(s => s.Monto),
+                            Cajero = $"{cajaChica.Trabajador.Nombre} {cajaChica.Trabajador.ApellidoPaterno} {cajaChica.Trabajador.ApellidoMaterno}",
+                            MParticulares = cajaChica.Servicios.Where(s => s.Tarifa.Actividad.Nombre == "Particular").Sum(s => s.Monto),
+                            MTurnos = cajaChica.Servicios.Where(s => s.Tarifa.HoraDia != null && s.Tarifa.Actividad.Nombre != "EsSalud").Sum(s => s.Monto),
+                            MEsSalud = cajaChica.Servicios.Where(s => s.Tarifa.Actividad.Nombre == "EsSalud").Sum(s => s.Monto),
                             MEfectivo = SumarPorTipoPagoServicio(cajaChica.Servicios, "Efectivo") + 
                                         SumarPorTipoPagoAbonados(cajaChica.ContratosAbonados, "Efectivo") +
                                         SumarPorTipoPagoComerciosAdicionales(cajaChica.ComerciosAdicionales, "Efectivo") -
@@ -117,13 +108,12 @@ namespace ViteMontevideo_API.Controllers
 
         [HttpPost]
         [ServiceFilter(typeof(ValidationFilterAttribute))]
-        public IActionResult Guardar(CajaChicaRequestDto cajaChicaDto)
+        public IActionResult Guardar(CajaChicaCrearRequestDto cajaChicaDto)
         {
             var trabajador = _dbContext.Trabajadores.Find(cajaChicaDto.IdTrabajador) ?? throw new NotFoundException("Trabajador no encontrado.");
 
             if (!trabajador.Estado)
-                throw new BadRequestException("Trabajador no activo.");
-            
+                throw new BadRequestException("Trabajador no activo.");       
 
             var cajaChicaAbierta = _dbContext.CajasChicas.Any(c => c.Estado == true);
 
@@ -131,6 +121,8 @@ namespace ViteMontevideo_API.Controllers
                 throw new BadRequestException("Ya existe una caja chica abierta.");    
 
             var cajaChica = _mapper.Map<CajaChica>(cajaChicaDto);
+
+            cajaChica.Estado = true;
 
             _dbContext.CajasChicas.Add(cajaChica);
             _dbContext.SaveChanges();
@@ -142,21 +134,22 @@ namespace ViteMontevideo_API.Controllers
 
         [HttpPut("{id}")]
         [ServiceFilter(typeof(ValidationFilterAttribute))]
-        public IActionResult Editar([FromRoute] int id,[FromBody] CajaChicaRequestDto cajaChicaDto)
+        public IActionResult Editar([FromRoute] int id,[FromBody] CajaChicaActualizarRequestDto cajaChicaDto)
         {
             var dbCajaChica = _dbContext.CajasChicas.Find(id) ?? throw new NotFoundException("Caja chica no encontrada.");
 
-            var trabajador = _dbContext.Trabajadores.Find(cajaChicaDto.IdTrabajador) ?? throw new NotFoundException("Trabajador no encontrado.");
+            if(cajaChicaDto.IdTrabajador != null)
+            {
+                var trabajador = _dbContext.Trabajadores.Find(cajaChicaDto.IdTrabajador) ?? throw new NotFoundException("Trabajador no encontrado.");
 
-            if (!trabajador.Estado)
-                throw new BadRequestException("Trabajador no activo.");
+                if (!trabajador.Estado)
+                    throw new BadRequestException("Trabajador no activo.");
+            }
 
-            dbCajaChica.IdTrabajador = cajaChicaDto.IdTrabajador;
-            dbCajaChica.FechaInicio = cajaChicaDto.FechaInicio;
-            dbCajaChica.HoraInicio = cajaChicaDto.HoraInicio;
+            dbCajaChica.IdTrabajador = cajaChicaDto.IdTrabajador ?? dbCajaChica.IdTrabajador;
             dbCajaChica.Observacion = string.IsNullOrWhiteSpace(cajaChicaDto.Observacion) ? null : cajaChicaDto.Observacion.Trim();
-            dbCajaChica.SaldoInicial = cajaChicaDto.SaldoInicial;
-            dbCajaChica.Turno = cajaChicaDto.Turno;
+            dbCajaChica.SaldoInicial = cajaChicaDto.SaldoInicial ?? dbCajaChica.SaldoInicial;
+            dbCajaChica.Turno = cajaChicaDto.Turno ?? dbCajaChica.Turno;
 
             _dbContext.SaveChanges();
 
@@ -171,7 +164,7 @@ namespace ViteMontevideo_API.Controllers
             var dbCajaChica = _dbContext.CajasChicas.Find(id) ?? throw new NotFoundException("Caja chica no encontrada.");
 
             if (dbCajaChica.Estado)
-                throw new BadRequestException("Esta caja chica ya esta abierta.");
+                throw new BadRequestException("Esta caja chica ya estaba abierta.");
 
             var cajaChicaAbierta = _dbContext.CajasChicas.Any(cc => cc.Estado == true);
 
@@ -190,18 +183,17 @@ namespace ViteMontevideo_API.Controllers
         }
 
         [HttpPatch("{id}/cerrar")]
+        [ServiceFilter(typeof(ValidationFilterAttribute))]
         public IActionResult Cerrar([FromRoute] int id, [FromBody] CajaChicaCerrarRequestDto cajaChicaDto)
         {
-            if (cajaChicaDto.FechaFinal == null || cajaChicaDto.HoraFinal == null)
-                throw new BadRequestException("La fecha y hora final no pueden estar vacias.");
-
             var dbCajaChica = _dbContext.CajasChicas.Find(id) ?? throw new NotFoundException("Caja chica no encontrada.");
 
             if (!dbCajaChica.Estado)
-                throw new BadRequestException("Esta caja chica ya se encuentra cerrada.");
+                throw new BadRequestException("Esta caja chica ya se encontraba cerrada.");
 
             dbCajaChica.FechaFinal = cajaChicaDto.FechaFinal;
             dbCajaChica.HoraFinal = cajaChicaDto.HoraFinal;
+            dbCajaChica.Observacion = string.IsNullOrWhiteSpace(cajaChicaDto.Observacion) ? null : cajaChicaDto.Observacion.Trim();
             dbCajaChica.Estado = false;
 
             _dbContext.SaveChanges();
@@ -223,7 +215,7 @@ namespace ViteMontevideo_API.Controllers
             var tieneServicios = _dbContext.Servicios.Any(ca => ca.IdCaja == id);
 
             if (tieneContratosAbonados || tieneEgresos || tieneServicios)
-                throw new BadRequestException("No se puede eliminar esta caja porque existen egresos, abonados o servicios vinculadas a esta.");         
+                throw new BadRequestException("No se puede eliminar esta caja porque contiene egresos, abonados o servicios.");         
 
             _dbContext.CajasChicas.Remove(cajaChica);
             _dbContext.SaveChanges();

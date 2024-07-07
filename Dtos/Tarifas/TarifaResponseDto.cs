@@ -17,7 +17,7 @@ namespace ViteMontevideo_API.Dtos.Tarifas
                 return HoraDia == null || HoraNoche == null ? "Hora" : "Turno";
             }
         }
-        public virtual Actividad OActividad { get; set; } = null!;
-        public virtual Categoria OCategoria { get; set; } = null!;
+        public virtual Actividad Actividad { get; set; } = null!;
+        public virtual Categoria Categoria { get; set; } = null!;
     }
 }

@@ -8,8 +8,8 @@ public partial class Vehiculo
     public short IdTarifa { get; set; }
     public int? IdCliente { get; set; }
     public string Placa { get; set; } = null!;
-    public virtual Tarifa OTarifa { get; set; } = null!;
-    public virtual Cliente? OCliente { get; set; }
+    public virtual Tarifa Tarifa { get; set; } = null!;
+    public virtual Cliente? Cliente { get; set; }
     [JsonIgnore]
     public virtual ICollection<Servicio> Servicios { get; set; } = new List<Servicio>();
     [JsonIgnore]

@@ -90,7 +90,7 @@ public partial class EstacionamientoContext : DbContext
                 .HasColumnType("smallmoney")
                 .HasColumnName("saldo_inicial");
 
-            entity.HasOne(d => d.OTrabajador).WithMany(e => e.CajasChicas)
+            entity.HasOne(d => d.Trabajador).WithMany(e => e.CajasChicas)
                 .HasForeignKey(e => e.IdTrabajador)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("Fk_Cajas_Chicas_Trabajadores");
@@ -174,12 +174,12 @@ public partial class EstacionamientoContext : DbContext
                 .IsUnicode(false)
                 .HasColumnName("observacion");
 
-            entity.HasOne(e => e.OCliente).WithMany(e => e.ComerciosAdicinales)
+            entity.HasOne(e => e.Cliente).WithMany(e => e.ComerciosAdicinales)
                 .HasForeignKey(e => e.IdCliente)
                 .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("Fk_ComerciosAdicionales_Clientes");
 
-            entity.HasOne(e => e.OCajaChica).WithMany(e => e.ComerciosAdicionales)
+            entity.HasOne(e => e.CajaChica).WithMany(e => e.ComerciosAdicionales)
                 .HasForeignKey(e => e.IdCaja)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("Fk_ComerciosAdicionales_CajasChicas");
@@ -224,12 +224,12 @@ public partial class EstacionamientoContext : DbContext
                 .IsUnicode(false)
                 .HasColumnName("observacion");
 
-            entity.HasOne(d => d.OVehiculo).WithMany(e => e.ContratosAbonados)
+            entity.HasOne(d => d.Vehiculo).WithMany(e => e.ContratosAbonados)
                 .HasForeignKey(e => e.IdVehiculo)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("Fk_Contratos_Abonados_Vehiculos");
 
-            entity.HasOne(e => e.OCajaChica).WithMany(e => e.ContratosAbonados)
+            entity.HasOne(e => e.CajaChica).WithMany(e => e.ContratosAbonados)
                 .HasForeignKey(e => e.IdCaja)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("Fk_Contratos_Abonados_Cajas_Chicas");
@@ -293,17 +293,17 @@ public partial class EstacionamientoContext : DbContext
                 .IsUnicode(false)
                 .HasColumnName("observacion");
 
-            entity.HasOne(e => e.OCajaChica).WithMany(e => e.Servicios)
+            entity.HasOne(e => e.CajaChica).WithMany(e => e.Servicios)
                 .HasForeignKey(d => d.IdCaja)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("Fk_Servicios_Cajas_Chicas");
 
-            entity.HasOne(d => d.OVehiculo).WithMany(p => p.Servicios)
+            entity.HasOne(d => d.Vehiculo).WithMany(p => p.Servicios)
                 .HasForeignKey(d => d.IdVehiculo)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("Fk_Servicios_Vehiculos");
 
-            entity.HasOne(d => d.OTarifa).WithMany(p => p.Servicios)
+            entity.HasOne(d => d.Tarifa).WithMany(p => p.Servicios)
                 .HasForeignKey(d => d.IdTarifa)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("Fk_Servicios_Tarifas");
@@ -324,12 +324,12 @@ public partial class EstacionamientoContext : DbContext
                 .HasColumnName("precio_noche");
             entity.Property(e => e.Tolerancia).HasColumnName("tolerancia");
 
-            entity.HasOne(d => d.OActividad).WithMany(p => p.Tarifas)
+            entity.HasOne(d => d.Actividad).WithMany(p => p.Tarifas)
                 .HasForeignKey(d => d.IdActividad)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("Fk_Tarifas_Actividades");
 
-            entity.HasOne(d => d.OCategoria).WithMany(p => p.Tarifas)
+            entity.HasOne(d => d.Categoria).WithMany(p => p.Tarifas)
                 .HasForeignKey(d => d.IdCategoria)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("Fk_Tarifas_Categoria");
@@ -374,7 +374,7 @@ public partial class EstacionamientoContext : DbContext
                 .IsUnicode(false)
                 .HasColumnName("telefono");
 
-            entity.HasOne(d => d.OCargo).WithMany(p => p.Trabajadores)
+            entity.HasOne(d => d.Cargo).WithMany(p => p.Trabajadores)
                 .HasForeignKey(d => d.IdCargo)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("Fk_Trabajadores_Cargos");
@@ -417,12 +417,12 @@ public partial class EstacionamientoContext : DbContext
                 .IsFixedLength()
                 .HasColumnName("placa");
 
-            entity.HasOne(e => e.OTarifa).WithMany(p => p.Vehiculos)
+            entity.HasOne(e => e.Tarifa).WithMany(p => p.Vehiculos)
                 .HasForeignKey(e => e.IdTarifa)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("Fk_Vehiculos_Tarifas");
 
-            entity.HasOne(e => e.OCliente).WithMany(p => p.Vehiculos)
+            entity.HasOne(e => e.Cliente).WithMany(p => p.Vehiculos)
                 .HasForeignKey(e => e.IdCliente)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("Fk_Vehiculos_Clientes");
