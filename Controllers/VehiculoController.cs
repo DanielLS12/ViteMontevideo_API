@@ -28,32 +28,38 @@ namespace ViteMontevideo_API.Controllers
         }
 
         [HttpGet]
-        public IActionResult Listar([FromQuery] string? placa, [FromQuery] CursorParams pararms) 
+        public IActionResult Listar([FromQuery] string placa, [FromQuery] CursorParams parametros) 
         {
-            var count = _dbContext.Vehiculos.Count();
-            const int maxCountRows = 30;
+            const int MaxRegistros = 50;
+            var query = _dbContext.Vehiculos.AsQueryable();
+            
+            // Filtraje
+            if (!string.IsNullOrWhiteSpace(placa) && placa.Length >= 3)
+                query = query.Where(v => v.Placa.Contains(placa.ToUpper()));
 
-            var vehiculosQuery = _dbContext.Vehiculos
+            int cantidad = query.Count();
+
+            // Cursor
+            if (parametros.Cursor > 0)
+                query = query.Where(v => v.IdVehiculo < parametros.Cursor);
+
+            query = query.Take(parametros.Count > MaxRegistros ? MaxRegistros : parametros.Count);
+
+            // Listar
+            var data = query
                 .AsNoTracking()
                 .OrderByDescending(v => v.IdVehiculo)
-                .ProjectTo<VehiculoResponseDto>(_mapper.ConfigurationProvider);
+                .ProjectTo<VehiculoResponseDto>(_mapper.ConfigurationProvider)
+                .ToList();
 
-            if(!string.IsNullOrWhiteSpace(placa) && placa.Length >= 3)
-            {
-                vehiculosQuery = vehiculosQuery.Where(v => v.Placa.Contains(placa.ToUpper()));
-                count = vehiculosQuery.Count();
-            }
+            var siguiente = data.Any() ? data.LastOrDefault()?.IdVehiculo : 0;
 
-            if (pararms.Cursor > 0)
-                vehiculosQuery = vehiculosQuery.Where(v => v.IdVehiculo < pararms.Cursor);
+            if (siguiente == 0)
+                cantidad = 0;
 
-            var vehiculos = vehiculosQuery.Take(pararms.Count > maxCountRows ? maxCountRows : pararms.Count).ToList();
+            Response.Headers.Add("X-Pagination", $"Next Cursor={siguiente}");
 
-            var nextCursor = vehiculos.Any() ? vehiculos.LastOrDefault()?.IdVehiculo : 0;
-
-            Response.Headers.Add("X-Pagination", $"Next Cursor={nextCursor}");
-
-            return Ok(new {cantidad = count, siguiente = nextCursor, data = vehiculos});
+            return Ok(new { cantidad, siguiente, data });
         }
 
         [HttpGet("{id:int}")]

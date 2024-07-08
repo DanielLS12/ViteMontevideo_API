@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ViteMontevideo_API.ActionFilters;
 using ViteMontevideo_API.Dtos.Common;
+using ViteMontevideo_API.Dtos.Cursor;
 using ViteMontevideo_API.Dtos.Egresos;
 using ViteMontevideo_API.Middleware.Exceptions;
 using ViteMontevideo_API.models;
@@ -27,17 +28,37 @@ namespace ViteMontevideo_API.Controllers
         }
 
         [HttpGet]
-        public IActionResult Listar() 
+        public IActionResult Listar(DateTime FechaInicio, DateTime FechaFinal, [FromQuery] CursorParams parametros) 
         {
-            var data = _dbContext.Egresos
+            const int MaxRegistros = 50;
+            var query = _dbContext.Egresos.AsQueryable();
+
+            // Filtraje
+            query = query.Where(c => c.Fecha >= FechaInicio && c.Fecha <= FechaFinal);
+
+            int cantidad = query.Count();
+
+            // Cursor
+            if (parametros.Cursor > 0)
+                query = query.Where(v => v.IdEgreso < parametros.Cursor);
+
+            query = query.Take(parametros.Count > MaxRegistros ? MaxRegistros : parametros.Count);
+
+            // Listar
+            var data = query
                 .AsNoTracking()
                 .OrderByDescending(c => c.IdEgreso)
                 .ProjectTo<EgresoResponseDto>(_mapper.ConfigurationProvider)
                 .ToList();
 
-            int cantidad = data.Count;
+            var siguiente = data.Any() ? data.LastOrDefault()?.IdEgreso : 0;
 
-            return Ok(new DataResponse<EgresoResponseDto>(cantidad,data));
+            if (siguiente == 0)
+                cantidad = 0;
+
+            Response.Headers.Add("X-Pagination", $"Next Cursor={siguiente}");
+
+            return Ok(new { cantidad, siguiente, data });
         }
 
         [HttpGet("{id}")]

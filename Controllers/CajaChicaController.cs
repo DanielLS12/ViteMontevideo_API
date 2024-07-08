@@ -7,6 +7,7 @@ using ViteMontevideo_API.ActionFilters;
 using ViteMontevideo_API.Dtos.CajasChicas;
 using ViteMontevideo_API.Dtos.CajasChicas.Filtros;
 using ViteMontevideo_API.Dtos.Common;
+using ViteMontevideo_API.Dtos.Cursor;
 using ViteMontevideo_API.Middleware.Exceptions;
 using ViteMontevideo_API.models;
 using ViteMontevideo_API.Models;
@@ -28,10 +29,12 @@ namespace ViteMontevideo_API.Controllers
         }
 
         [HttpGet]
-        public IActionResult Listar([FromQuery] FiltroCajaChica filtro)
+        public IActionResult Listar([FromQuery] FiltroCajaChica filtro, [FromQuery] CursorParams parametros)
         {
+            const int MaxRegistros = 50;
             var query = _dbContext.CajasChicas.AsQueryable();
 
+            // Filtraje
             query = query.Where(c => c.FechaInicio >= filtro.FechaInicio && c.FechaInicio <= filtro.FechaFinal);
 
             if (!string.IsNullOrWhiteSpace(filtro.Turno))
@@ -39,15 +42,29 @@ namespace ViteMontevideo_API.Controllers
                 query = query.Where(c => c.Turno.Contains(filtro.Turno));
             }
 
+            int cantidad = query.Count();
+
+            // Cursor
+            if (parametros.Cursor > 0)
+                query = query.Where(v => v.IdCaja < parametros.Cursor);
+
+            query = query.Take(parametros.Count > MaxRegistros ? MaxRegistros : parametros.Count);
+
+            // Listar
             var data = query
                 .AsNoTracking()
                 .OrderByDescending(caja => caja.IdCaja)
                 .ProjectTo<CajaChicaResponseDto>(_mapper.ConfigurationProvider)
                 .ToList();
 
-            int cantidad = data.Count;
+            var siguiente = data.Any() ? data.LastOrDefault()?.IdCaja : 0;
 
-            return Ok(new DataResponse<CajaChicaResponseDto>(cantidad, data));
+            if (siguiente == 0)
+                cantidad = 0;
+
+            Response.Headers.Add("X-Pagination", $"Next Cursor={siguiente}");
+
+            return Ok(new { cantidad, siguiente, data });
         }
 
         [HttpGet("{id}")]
