@@ -7,6 +7,7 @@ using ViteMontevideo_API.models;
 using ViteMontevideo_API.Middleware;
 using Microsoft.AspNetCore.Mvc;
 using ViteMontevideo_API.ActionFilters;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,7 +37,11 @@ builder.Services.AddAuthentication(config =>
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "ViteMontevideo", Version = "v1" });
+    c.SchemaFilter<EnumSchemaFilter>();
+});
 builder.Services.AddAutoMapper(typeof(Program).Assembly);
 
 builder.Services.AddDbContext<EstacionamientoContext>(opt => opt.UseSqlServer(builder.Configuration.GetConnectionString("SqlString")));
