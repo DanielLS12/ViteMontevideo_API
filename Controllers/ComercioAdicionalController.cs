@@ -5,7 +5,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ViteMontevideo_API.ActionFilters;
 using ViteMontevideo_API.Dtos.ComerciosAdicionales;
+using ViteMontevideo_API.Dtos.ComerciosAdicionales.Filtros;
 using ViteMontevideo_API.Dtos.Common;
+using ViteMontevideo_API.Dtos.Cursor;
 using ViteMontevideo_API.Middleware.Exceptions;
 using ViteMontevideo_API.models;
 using ViteMontevideo_API.Models;
@@ -27,17 +29,69 @@ namespace ViteMontevideo_API.Controllers
         }
 
         [HttpGet]
-        public IActionResult Listar() 
+        public IActionResult Listar([FromQuery] FiltroComercioAdicional filtro, [FromQuery] CursorParams parametros) 
         {
-            var data = _dbContext.ComerciosAdicionales
+            const int MaxRegistros = 50;
+            var query = _dbContext.ComerciosAdicionales.Include(cad => cad.Cliente).AsQueryable();
+
+            // Filtraje
+            if (!string.IsNullOrWhiteSpace(filtro.Cliente))
+            {
+                var terminos = filtro.Cliente.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+                foreach (var termino in terminos)
+                {
+                    var lowerTermino = termino.ToLower();
+                    query = query.Where(cad =>
+                        EF.Functions.Like(cad.Cliente.Nombres.ToLower(), $"%{lowerTermino}%") ||
+                        EF.Functions.Like(cad.Cliente.Apellidos.ToLower(), $"%{lowerTermino}%"));
+                }
+            }
+
+            if(filtro.Tipo.HasValue)
+            {
+                query = query.Where(cad => cad.TipoComercioAdicional == filtro.Tipo.Value.ToString());
+            }
+
+            if(filtro.EstaPagado.HasValue)
+            {
+                if (filtro.EstaPagado.Value)
+                {
+                    if (filtro.TipoPago.HasValue)
+                    {
+                        query = query.Where(cad => cad.TipoPago == filtro.TipoPago.Value.ToString());
+                    }
+                    query = query.Where(cad => cad.IdCaja != null);
+                }
+                else
+                {
+                    query = query.Where(cad => cad.IdCaja == null);
+                }
+            }
+
+            int cantidad = query.Count();
+
+            // Cursor
+            if (parametros.Cursor > 0)
+                query = query.Where(v => v.IdCliente < parametros.Cursor);
+
+            query = query.Take(parametros.Count > MaxRegistros ? MaxRegistros : parametros.Count);
+
+            // Listar
+            var data = query
                 .AsNoTracking()
                 .OrderByDescending(c => c.IdComercioAdicional)
                 .ProjectTo<ComercioAdicionalResponseDto>(_mapper.ConfigurationProvider)
                 .ToList();
 
-            int cantidad = data.Count;
+            var siguiente = data.Any() ? data.LastOrDefault()?.IdComercioAdicional : 0;
 
-            return Ok(new DataResponse<ComercioAdicionalResponseDto>(cantidad,data));
+            if (siguiente == 0)
+                cantidad = 0;
+
+            Response.Headers.Add("X-Pagination", $"Next Cursor={siguiente}");
+
+            return Ok(new { cantidad, siguiente, data });
         }
 
         [HttpGet("{id}")]
