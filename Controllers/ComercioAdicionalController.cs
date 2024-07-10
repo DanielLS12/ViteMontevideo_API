@@ -70,6 +70,7 @@ namespace ViteMontevideo_API.Controllers
             }
 
             int cantidad = query.Count();
+            decimal totalMonto = query.Sum(ca => ca.Monto);
 
             // Cursor
             if (parametros.Cursor > 0)
@@ -91,7 +92,7 @@ namespace ViteMontevideo_API.Controllers
 
             Response.Headers.Add("X-Pagination", $"Next Cursor={siguiente}");
 
-            return Ok(new { cantidad, siguiente, data });
+            return Ok(new { cantidad, totalMonto, siguiente, data });
         }
 
         [HttpGet("{id}")]

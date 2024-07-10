@@ -1,11 +1,13 @@
 ﻿#pragma warning disable CS8602
 using AutoMapper;
+using AutoMapper.Configuration.Conventions;
 using AutoMapper.QueryableExtensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ViteMontevideo_API.ActionFilters;
 using ViteMontevideo_API.Dtos.Common;
+using ViteMontevideo_API.Dtos.Cursor;
 using ViteMontevideo_API.Dtos.Servicios;
 using ViteMontevideo_API.Dtos.Servicios.Filtros;
 using ViteMontevideo_API.Middleware.Exceptions;
@@ -28,8 +30,9 @@ namespace ViteMontevideo_API.Controllers
         }
 
         [HttpGet]
-        public IActionResult Listar([FromQuery] FiltroServicio fs)
+        public IActionResult Listar([FromQuery] FiltroServicio fs, [FromQuery] CursorParams parametros)
         {
+            const int MaxRegistros = 50;
             var query = _dbContext.Servicios.Include(v => v.Vehiculo).AsQueryable();
 
             query = query.Where(s => s.EstadoPago == fs.EstadoPago);
@@ -52,19 +55,35 @@ namespace ViteMontevideo_API.Controllers
                 ? query.OrderBy(s => s.FechaEntrada).ThenBy(s => s.HoraEntrada)
                 : query.OrderByDescending(s => s.FechaEntrada).ThenByDescending(s => s.HoraEntrada);
 
+            int cantidad = query.Count();
+
+            // Cursor
+            if (parametros.Cursor > 0)
+                query = query.Where(v => v.IdServicio < parametros.Cursor);
+
+            query = query.Take(parametros.Count > MaxRegistros ? MaxRegistros : parametros.Count);
+
+            // Listar
             var data = query
                 .AsNoTracking()
                 .OrderByDescending(s => s.IdServicio)
                 .ProjectTo<ServicioResponseDto>(_mapper.ConfigurationProvider)
                 .ToList();
 
-            int cantidad = data.Count;
+            var siguiente = data.Any() ? data.LastOrDefault()?.IdServicio : 0;
+
+            if (siguiente == 0)
+                cantidad = 0;
+
+            Response.Headers.Add("X-Pagination", $"Next Cursor={siguiente}");
+
             decimal totalMonto = data.Sum(s => s.Monto);
             decimal totalDescuento = data.Sum(s => s.Descuento);
 
             var resultado = new
             {
                 cantidad,
+                siguiente,
                 totalMonto,
                 totalDescuento,
                 data,

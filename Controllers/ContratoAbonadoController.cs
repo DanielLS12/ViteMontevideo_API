@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using ViteMontevideo_API.ActionFilters;
 using ViteMontevideo_API.Dtos.Common;
 using ViteMontevideo_API.Dtos.ContratosAbonado;
+using ViteMontevideo_API.Dtos.Cursor;
 using ViteMontevideo_API.Middleware.Exceptions;
 using ViteMontevideo_API.models;
 
@@ -27,17 +28,46 @@ namespace ViteMontevideo_API.Controllers
         }
 
         [HttpGet]
-        public IActionResult Listar()
+        public IActionResult Listar(string placa,bool? estaPagado, [FromQuery] CursorParams parametros)
         {
-            var data = _dbContext.ContratosAbonados
+            const int MaxRegistros = 50;
+            var query = _dbContext.ContratosAbonados.Include(ca => ca.Vehiculo).AsQueryable();
+
+            // Filtraje
+            if (!string.IsNullOrWhiteSpace(placa) && placa.Length >= 3)
+            {
+                query = query.Where(ca => ca.Vehiculo.Placa.Contains(placa));
+            }
+
+            if(estaPagado != null)
+            {
+                query = query.Where(ca => ca.EstadoPago == estaPagado);
+            }
+
+            int cantidad = query.Count();
+            decimal totalMonto = query.Sum(ca => ca.Monto);
+
+            // Cursor
+            if (parametros.Cursor > 0)
+                query = query.Where(v => v.IdContratoAbonado < parametros.Cursor);
+
+            query = query.Take(parametros.Count > MaxRegistros ? MaxRegistros : parametros.Count);
+
+            // Listar
+            var data = query
                 .AsNoTracking()
                 .OrderByDescending(c => c.IdContratoAbonado)
                 .ProjectTo<ContratoAbonadoResponseDto>(_mapper.ConfigurationProvider)
                 .ToList();
 
-            int cantidad = data.Count;
+            var siguiente = data.Any() ? data.LastOrDefault()?.IdContratoAbonado : 0;
 
-            return Ok(new DataResponse<ContratoAbonadoResponseDto>(cantidad,data));
+            if (siguiente == 0)
+                cantidad = 0;
+
+            Response.Headers.Add("X-Pagination", $"Next Cursor={siguiente}");
+
+            return Ok(new { cantidad, totalMonto, siguiente, data });
         }
 
         [HttpGet("{id}")]
@@ -61,6 +91,11 @@ namespace ViteMontevideo_API.Controllers
 
             if (tieneServicioEnMarcha)
                 throw new BadRequestException("Este vehículo tiene un servicio en marcha con modalidad de hora o turno. No se pudo crear el abonado.");
+
+            var tieneContratoAbonadoEnMarcha = _dbContext.ContratosAbonados.Any(ca => ca.IdVehiculo == contratoAbonadoDto.IdVehiculo && ca.EstadoPago == false);
+
+            if (tieneContratoAbonadoEnMarcha)
+                throw new BadRequestException("Este vehículo tiene un abonado en marcha. No se pudo crear el abonado.");
 
             var contratoAbonado = _mapper.Map<ContratoAbonado>(contratoAbonadoDto);
 
@@ -86,6 +121,11 @@ namespace ViteMontevideo_API.Controllers
 
                 if(tieneServicioEnMarcha && !dbContratoAbonado.EstadoPago)
                     throw new BadRequestException("Este vehículo tiene un servicio en marcha con modalidad de hora o turno. No se pudo actualizar el abonado.");
+
+                var tieneContratoAbonadoEnMarcha = _dbContext.ContratosAbonados.Any(ca => ca.IdVehiculo == contratoAbonadoDto.IdVehiculo && ca.EstadoPago == false);
+
+                if (tieneContratoAbonadoEnMarcha)
+                    throw new BadRequestException("Este vehículo tiene un abonado en marcha. No se pudo crear el abonado.");
 
                 dbContratoAbonado.IdVehiculo = vehiculoEncontrado.IdVehiculo;
             }
