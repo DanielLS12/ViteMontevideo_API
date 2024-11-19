@@ -1,7 +1,7 @@
 ﻿using Azure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using ViteMontevideo_API.Dtos.Common;
+using ViteMontevideo_API.Presentation.Dtos.Common;
 
 namespace ViteMontevideo_API.ActionFilters
 {

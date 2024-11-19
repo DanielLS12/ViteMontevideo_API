@@ -1,16 +1,15 @@
 ﻿using AutoMapper;
-using ViteMontevideo_API.Dtos.CajasChicas;
-using ViteMontevideo_API.Dtos.Clientes;
-using ViteMontevideo_API.Dtos.ComerciosAdicionales;
-using ViteMontevideo_API.Dtos.ContratosAbonado;
-using ViteMontevideo_API.Dtos.Egresos;
-using ViteMontevideo_API.Dtos.Servicios;
-using ViteMontevideo_API.Dtos.Tarifas;
-using ViteMontevideo_API.Dtos.Trabajadores;
-using ViteMontevideo_API.Dtos.Usuarios;
-using ViteMontevideo_API.Dtos.Vehiculos;
-using ViteMontevideo_API.models;
-using ViteMontevideo_API.Models;
+using ViteMontevideo_API.Persistence.Models;
+using ViteMontevideo_API.Presentation.Dtos.CajasChicas;
+using ViteMontevideo_API.Presentation.Dtos.Clientes;
+using ViteMontevideo_API.Presentation.Dtos.ComerciosAdicionales;
+using ViteMontevideo_API.Presentation.Dtos.ContratosAbonado;
+using ViteMontevideo_API.Presentation.Dtos.Egresos;
+using ViteMontevideo_API.Presentation.Dtos.Servicios;
+using ViteMontevideo_API.Presentation.Dtos.Tarifas;
+using ViteMontevideo_API.Presentation.Dtos.Trabajadores;
+using ViteMontevideo_API.Presentation.Dtos.Usuarios;
+using ViteMontevideo_API.Presentation.Dtos.Vehiculos;
 
 namespace ViteMontevideo_API.Mapper
 {

@@ -1,0 +1,9 @@
+﻿using ViteMontevideo_API.Persistence.Models;
+
+namespace ViteMontevideo_API.Persistence.Repositories.Interfaces
+{
+    public interface IEgresoRepository : IBaseRepository<int, Egreso>, IPageCursorRepository<Egreso>
+    {
+        Task Delete(Egreso egreso);
+    }
+}
