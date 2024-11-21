@@ -4,8 +4,8 @@ namespace ViteMontevideo_API.Presentation.Dtos.Trabajadores
 {
     public class TrabajadorCrearRequestDto
     {
-        [Required(ErrorMessage = "Elegir un cargo es requerido.")]
-        public byte? IdCargo { get; set; }
+        [Required(ErrorMessage = "El id del cargo es requerido.")]
+        public byte IdCargo { get; set; }
 
         [Required(ErrorMessage = "El nombre es requerido.")]
         [RegularExpression(@"^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]+$", ErrorMessage = "El campo apellidos solo puede contener letras.")]
@@ -19,7 +19,7 @@ namespace ViteMontevideo_API.Presentation.Dtos.Trabajadores
         [RegularExpression(@"^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]+$", ErrorMessage = "El campo apellidos solo puede contener letras.")]
         public string ApellidoMaterno { get; set; } = null!;
 
-        [EmailAddress(ErrorMessage = "No cumple con el formato.")]
+        [EmailAddress(ErrorMessage = "El campo correo no cumple con el formato correcto.")]
         public string? Correo { get; set; }
 
         [RegularExpression(@"^[0-9]+$", ErrorMessage = "El campo telefono debe contener solo dígitos numéricos sin espacios ni caracteres especiales.")]
