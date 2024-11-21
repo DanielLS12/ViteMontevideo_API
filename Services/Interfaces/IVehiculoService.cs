@@ -6,7 +6,7 @@ namespace ViteMontevideo_API.Services.Interfaces
 {
     public interface IVehiculoService
     {
-        Task<CursorResponse<VehiculoResponseDto>> GetAllPageCursor(FiltroVehiculo filtro);
+        Task<PageCursorResponse<VehiculoResponseDto>> GetAllPageCursor(FiltroVehiculo filtro);
         Task<VehiculoResponseDto> GetById(int id);
         Task<VehiculoResponseDto> GetByPlaca(string placa);
         Task<ApiResponse> Insert(VehiculoCrearRequestDto vehiculo);

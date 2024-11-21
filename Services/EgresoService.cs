@@ -24,7 +24,7 @@ namespace ViteMontevideo_API.Services
             _mapper = mapper;
         }
 
-        public async Task<CursorResponse<EgresoResponseDto>> GetAllPageCursor(FiltroEgreso filtro)
+        public async Task<PageCursorMontoResponse<EgresoResponseDto>> GetAllPageCursor(FiltroEgreso filtro)
         {
             const int MaxRegistros = 200;
             var query = _egresoRepository.Query();
@@ -32,8 +32,9 @@ namespace ViteMontevideo_API.Services
             query = query.Where(e => e.Fecha >= filtro.FechaInicio && e.Fecha <= filtro.FechaFinal);
 
             int cantidad = query.Count();
+            decimal totalMonto = query.Sum(e => e.Monto);
 
-            query = _egresoRepository.ApplyPageCursor(query, filtro.Cursor, filtro.Count, MaxRegistros);
+            query = _egresoRepository.ApplyPageCursor(query, filtro.Cursor, filtro.Count, MaxRegistros, e => e.IdEgreso);
 
             var data = await query
                 .OrderByDescending(e => e.IdEgreso)
@@ -45,7 +46,7 @@ namespace ViteMontevideo_API.Services
             if (siguienteCursor == 0)
                 cantidad = 0;
 
-            return new CursorResponse<EgresoResponseDto>(cantidad, siguienteCursor, data);
+            return new PageCursorMontoResponse<EgresoResponseDto>(cantidad, siguienteCursor, data, totalMonto);
         }
 
         public async Task<EgresoResponseDto> GetById(int id)
@@ -57,7 +58,7 @@ namespace ViteMontevideo_API.Services
         public async Task<ApiResponse> Insert(EgresoCrearRequestDto egreso)
         {
             var cajaChicaAbierta = await _cajaChicaRepository.GetByEstadoTrue() 
-                ?? throw new BadRequestException("No es posible registrar el egreso porque no hay ninguna caja chica abierta.");
+                ?? throw new BadRequestException("No es posible registrar el egreso porque no hay ninguna caja chica abierta actualmente.");
 
             if (cajaChicaAbierta.FechaInicio > egreso.Fecha)
                 throw new BadRequestException($"La fecha del egreso debe ser igual o mayor a la fecha de inicio ({cajaChicaAbierta.FechaInicio.ToShortDateString()}) de la caja chica abierta encontrada.");
@@ -71,8 +72,8 @@ namespace ViteMontevideo_API.Services
 
         public async Task<ApiResponse> Update(int id, EgresoActualizarRequestDto egreso)
         {
-            var cajaChica = await _cajaChicaRepository.GetById(egreso.IdCajaChica);
-            if (!cajaChica.Estado)
+            bool hasCajaChicaOpen = await _egresoRepository.HasOpenCajaChicaById(id);
+            if (!hasCajaChicaOpen)
                 throw new BadRequestException("La caja chica en donde el egreso se encuentra esta cerrada. Por lo tanto, no se puede modificar.");
 
             var dbEgreso = await _egresoRepository.GetById(id);
@@ -87,12 +88,11 @@ namespace ViteMontevideo_API.Services
 
         public async Task<ApiResponse> DeleteById(int id)
         {
-            var egreso = await _egresoRepository.GetById(id);
-            var cajaChica = await _cajaChicaRepository.GetById(egreso.IdCaja);
-            if(!cajaChica.Estado)
+            bool hasOpenCajaChica = await _egresoRepository.HasOpenCajaChicaById(id);
+            if(!hasOpenCajaChica)
                 throw new BadRequestException("La caja chica en donde el egreso se encuentra esta cerrada. Por lo tanto, no se puede eliminar.");
 
-            await _egresoRepository.Delete(egreso);
+            await _egresoRepository.DeleteById(id);
             return ApiResponse.Success("La caja chica ha sido eliminada.");
         }
     }

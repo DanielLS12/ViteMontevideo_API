@@ -12,14 +12,6 @@ namespace ViteMontevideo_API.Persistence.Repositories
         {
         }
 
-        public IQueryable<Cliente> ApplyPageCursor(IQueryable<Cliente> query, int cursor, int count, int MaxRegisters)
-        {
-            if (cursor > 0)
-                query = query.Where(v => v.IdCliente < cursor);
-
-            return query.Take(count > MaxRegisters ? MaxRegisters : count);
-        }
-
         public async Task<bool> ExistsById(int id) =>
             await _context.Clientes.AnyAsync(c => c.IdCliente.Equals(id));
 
@@ -28,7 +20,5 @@ namespace ViteMontevideo_API.Persistence.Repositories
 
         public async Task<bool> HasVehiculosById(int id) =>
             await _context.Clientes.AnyAsync(c => c.IdCliente == id && c.Vehiculos.Any());
-
-        public IQueryable<Cliente> Query() => _context.Clientes.AsNoTracking().AsQueryable();
     }
 }

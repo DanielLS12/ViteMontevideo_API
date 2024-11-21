@@ -24,7 +24,7 @@ namespace ViteMontevideo_API.Services
             _mapper = mapper;
         }
 
-        public async Task<CursorResponse<ClienteResponseDto>> GetAllPageCursor(FiltroCliente filtro)
+        public async Task<PageCursorResponse<ClienteResponseDto>> GetAllPageCursor(FiltroCliente filtro)
         {
             const int MaxRegistros = 200;
             var query = _repository.Query();
@@ -44,7 +44,7 @@ namespace ViteMontevideo_API.Services
 
             int cantidad = query.Count();
 
-            query = _repository.ApplyPageCursor(query, filtro.Cursor, filtro.Count, MaxRegistros);
+            query = _repository.ApplyPageCursor(query, filtro.Cursor, filtro.Count, MaxRegistros, c => c.IdCliente);
 
             var data = await query
                 .OrderByDescending(c => c.IdCliente)
@@ -56,7 +56,7 @@ namespace ViteMontevideo_API.Services
             if(siguienteCursor == 0)
                 cantidad = 0;
 
-            return new CursorResponse<ClienteResponseDto>(cantidad, siguienteCursor, data);
+            return new PageCursorResponse<ClienteResponseDto>(cantidad, siguienteCursor, data);
         }
 
         public async Task<ClienteDto> GetById(int id)

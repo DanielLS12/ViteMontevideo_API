@@ -2,8 +2,8 @@
 
 namespace ViteMontevideo_API.Persistence.Repositories.Interfaces
 {
-    public interface IEgresoRepository : IBaseRepository<int, Egreso>, IPageCursorRepository<Egreso>
+    public interface IEgresoRepository : IBaseRepository<int, Egreso>
     {
-        Task Delete(Egreso egreso);
+        Task<bool> HasOpenCajaChicaById(int id);
     }
 }

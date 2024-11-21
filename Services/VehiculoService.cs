@@ -30,7 +30,7 @@ namespace ViteMontevideo_API.Services
             _mapper = mapper;
         }
 
-        public async Task<CursorResponse<VehiculoResponseDto>> GetAllPageCursor(FiltroVehiculo filtro)
+        public async Task<PageCursorResponse<VehiculoResponseDto>> GetAllPageCursor(FiltroVehiculo filtro)
         {
             const int MaxRegisters = 200;
             var query = _vehiculoRepository.Query();
@@ -38,9 +38,9 @@ namespace ViteMontevideo_API.Services
             if (!string.IsNullOrWhiteSpace(filtro.Placa) && filtro.Placa.Length >= 3)
                 query = query.Where(v => v.Placa.Contains(filtro.Placa.ToUpper()));
 
-            int cantidad = query.Count();
+            int cantidad = await query.CountAsync();
 
-            query = _vehiculoRepository.ApplyPageCursor(query, filtro.Cursor, filtro.Count, MaxRegisters);
+            query = _vehiculoRepository.ApplyPageCursor(query, filtro.Cursor, filtro.Count, MaxRegisters, v => v.IdVehiculo);
 
             var data = await query
                 .OrderByDescending(v => v.IdVehiculo)
@@ -52,7 +52,7 @@ namespace ViteMontevideo_API.Services
             if (siguienteCursor == 0)
                 cantidad = 0;
 
-            return new CursorResponse<VehiculoResponseDto>(cantidad, siguienteCursor,data);
+            return new PageCursorResponse<VehiculoResponseDto>(cantidad, siguienteCursor,data);
         }
 
         public async Task<VehiculoResponseDto> GetById(int id)

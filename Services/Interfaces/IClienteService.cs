@@ -6,7 +6,7 @@ namespace ViteMontevideo_API.Services.Interfaces
 {
     public interface IClienteService
     {
-        Task<CursorResponse<ClienteResponseDto>> GetAllPageCursor(FiltroCliente filtro);
+        Task<PageCursorResponse<ClienteResponseDto>> GetAllPageCursor(FiltroCliente filtro);
         Task<ClienteDto> GetById(int id);
         Task<ApiResponse> Insert(ClienteCrearRequestDto cliente);
         Task<ApiResponse> Update(int id, ClienteActualizarRequestDto cliente);
