@@ -4,8 +4,6 @@ namespace ViteMontevideo_API.Presentation.Dtos.ContratosAbonado
 {
     public class ContratoAbonadoActualizarRequestDto
     {
-        public int IdVehiculo { get; set; }
-
         public DateTime FechaInicio { get; set; }
 
         public DateTime FechaFinal { get; set; }

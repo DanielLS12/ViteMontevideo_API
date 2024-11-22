@@ -1,6 +1,5 @@
 ﻿using AutoMapper;
 using AutoMapper.QueryableExtensions;
-using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.EntityFrameworkCore;
 using ViteMontevideo_API.Exceptions;
 using ViteMontevideo_API.Persistence.Models;
@@ -71,6 +70,9 @@ namespace ViteMontevideo_API.Services
 
         public async Task<ApiResponse> Insert(ContratoAbonadoCrearRequestDto abonado)
         {
+            if (abonado.FechaInicio > abonado.FechaFinal)
+                throw new BadRequestException("La fecha de inicio no puede ser mayor que la fecha final");
+
             bool existsVehiculo = await _vehiculoRepository.ExistsById(abonado.IdVehiculo);
             if (!existsVehiculo)
                 throw new BadRequestException("El vehículo que intento vincular al abono no existe.");
@@ -92,19 +94,19 @@ namespace ViteMontevideo_API.Services
 
         public async Task<ApiResponse> Update(int id, ContratoAbonadoActualizarRequestDto abonado)
         {
-            bool hasOpenCajaChica = await _contratoAbonadoRepository.HasOpenCajaChicaById(id);
-            if (!hasOpenCajaChica)
-                throw new BadRequestException("La caja chica en donde el abono se encuentra esta cerrada. Por lo tanto, no se puede modificar.");
+            if (abonado.FechaInicio > abonado.FechaFinal)
+                throw new BadRequestException("La fecha de inicio no puede ser mayor que la fecha final");
+
+            bool hasClosedCajaChica = await _contratoAbonadoRepository.HasClosedCajaChicaById(id);
+            if (hasClosedCajaChica)
+                throw new BadRequestException("La caja chica en donde el abono se encuentra está cerrada. Por lo tanto, no se puede modificar.");
+
+            bool isPaid = await _contratoAbonadoRepository.IsPaidById(id);
+            if (isPaid)
+                throw new BadRequestException("El abono ya ha sido pagado, por lo que no es posible eliminarlo.");
 
             var dbContratoAbonado = await _contratoAbonadoRepository.GetById(id);
-            if (dbContratoAbonado.EstadoPago)
-                throw new BadRequestException("El abono ya ha sido pagado, por lo que no es posible modificarlo.");
 
-            bool existsVehiculo = await _vehiculoRepository.ExistsById(abonado.IdVehiculo);
-            if(!existsVehiculo)
-                throw new BadRequestException("El vehículo que intento vincular al abono no existe.");
-
-            dbContratoAbonado.IdVehiculo = abonado.IdVehiculo;
             dbContratoAbonado.FechaInicio = abonado.FechaInicio;
             dbContratoAbonado.FechaFinal = abonado.FechaFinal;
             dbContratoAbonado.HoraInicio = abonado.HoraInicio;
@@ -113,19 +115,23 @@ namespace ViteMontevideo_API.Services
             dbContratoAbonado.Observacion = string.IsNullOrWhiteSpace(abonado.Observacion) ? null : abonado.Observacion.Trim();
             
             await _contratoAbonadoRepository.Update(dbContratoAbonado);
-            dbContratoAbonado = await _contratoAbonadoRepository.GetById(id);
             var updatedContratoAbonado = _mapper.Map<ContratoAbonadoResponseDto>(dbContratoAbonado);
             return ApiResponse.Success("El abono ha sido actualizado.", updatedContratoAbonado);
         }
 
         public async Task<ApiResponse> Pay(int id, ContratoAbonadoPagarRequestDto abonado)
         {
-            var dbContratoAbonado = await _contratoAbonadoRepository.GetById(id);
-            if (dbContratoAbonado.EstadoPago)
-                throw new BadRequestException("El abono ya estaba pagado.");
+            bool isPaid = await _contratoAbonadoRepository.IsPaidById(id);
+            if (isPaid)
+                throw new BadRequestException("El abono ya ha sido pagado, por lo que no es posible eliminarlo.");
 
             var cajaChicaAbierta = await _cajaChicaRepository.GetByEstadoTrue()
                 ?? throw new BadRequestException("No es posible modificar el estado de pago del abono porque no hay ninguna caja chica abierta actualmente.");
+
+            var dbContratoAbonado = await _contratoAbonadoRepository.GetById(id);
+
+            if (dbContratoAbonado.FechaInicio > abonado.FechaPago)
+                throw new BadRequestException("La fecha de pago no puede ser antes de la fecha de inicio.");
 
             dbContratoAbonado.IdCaja = cajaChicaAbierta.IdCaja;
             dbContratoAbonado.FechaPago = abonado.FechaPago;
@@ -141,13 +147,13 @@ namespace ViteMontevideo_API.Services
 
         public async Task<ApiResponse> CancelPayment(int id)
         {
-            bool hasOpenCajaChica = await _contratoAbonadoRepository.HasOpenCajaChicaById(id);
-            if (!hasOpenCajaChica)
-                throw new BadRequestException("La caja chica en donde el abono se encuentra esta cerrada. Por lo tanto, no se puede modificar.");
+            bool hasClosedCajaChica = await _contratoAbonadoRepository.HasClosedCajaChicaById(id);
+            if (hasClosedCajaChica)
+                throw new BadRequestException("La caja chica en donde el abono se encuentra está cerrada. Por lo tanto, no se puede modificar.");
 
             var dbContratoAbonado = await _contratoAbonadoRepository.GetById(id);
-            if (!dbContratoAbonado.EstadoPago)
-                throw new BadRequestException("El pago del abono ya estaba anulado.");
+            if(!dbContratoAbonado.EstadoPago)
+                throw new BadRequestException("El abono ya ha sido anulado, por lo que no es posible modificarlo.");
 
             dbContratoAbonado.IdCaja = null;
             dbContratoAbonado.FechaPago = null;
@@ -163,9 +169,13 @@ namespace ViteMontevideo_API.Services
 
         public async Task<ApiResponse> DeleteById(int id)
         {
-            bool hasOpenCajaChica = await _contratoAbonadoRepository.HasOpenCajaChicaById(id);
-            if(!hasOpenCajaChica)
-                throw new BadRequestException("La caja chica en donde el abono se encuentra esta cerrada. Por lo tanto, no se puede eliminar.");
+            bool hasClosedCajaChica = await _contratoAbonadoRepository.HasClosedCajaChicaById(id);
+            if (hasClosedCajaChica)
+                throw new BadRequestException("La caja chica en donde el abono se encuentra está cerrada. Por lo tanto, no se puede eliminar.");
+
+            bool isPaid = await _contratoAbonadoRepository.IsPaidById(id);
+            if (isPaid)
+                throw new BadRequestException("El abono ya ha sido pagado, por lo que no es posible eliminarlo.");
 
             await _contratoAbonadoRepository.DeleteById(id);
             return ApiResponse.Success("El abono ha sido eliminado.");

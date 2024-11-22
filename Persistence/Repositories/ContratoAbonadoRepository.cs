@@ -19,10 +19,13 @@ namespace ViteMontevideo_API.Persistence.Repositories
                 .FirstOrDefaultAsync(ca => ca.IdContratoAbonado == id)
             ?? throw new NotFoundException("Abono no encontrado.");
 
+        public async Task<bool> IsPaidById(int id) =>
+            await _context.ContratosAbonados.AnyAsync(ca => ca.IdContratoAbonado == id && ca.EstadoPago);
+
         public async Task<bool> HasAnyInProgressByIdVehiculo(int idVehiculo) =>
             await _context.ContratosAbonados.AnyAsync(ca => ca.IdVehiculo == idVehiculo && !ca.EstadoPago);
 
-        public async Task<bool> HasOpenCajaChicaById(int id) =>
-            await _context.ContratosAbonados.AnyAsync(ca => ca.IdContratoAbonado == id && ca.CajaChica != null && ca.CajaChica.Estado);
+        public async Task<bool> HasClosedCajaChicaById(int id) =>
+            await _context.ContratosAbonados.AnyAsync(ca => ca.IdContratoAbonado == id && ca.CajaChica != null && !ca.CajaChica.Estado);
     }
 }
