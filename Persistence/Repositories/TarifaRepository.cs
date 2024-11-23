@@ -26,7 +26,7 @@ namespace ViteMontevideo_API.Persistence.Repositories
                 .Include(t => t.Categoria)
                 .Include(t => t.Actividad)
                 .FirstOrDefaultAsync(t => t.IdTarifa == id) 
-            ?? throw new NotFoundException("Tarifa no encontrada.");
+            ?? throw new NotFoundException();
 
         public async Task<bool> ExistsByCategoriaActividadAndTipo(short categoryId, short activityId, bool isHora) =>
             await _context.Tarifas.AnyAsync(t => t.IdCategoria == categoryId && t.IdActividad == activityId &&

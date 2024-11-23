@@ -17,7 +17,7 @@ namespace ViteMontevideo_API.Persistence.Repositories
             await _context.ContratosAbonados
                 .Include(ca => ca.Vehiculo)
                 .FirstOrDefaultAsync(ca => ca.IdContratoAbonado == id)
-            ?? throw new NotFoundException("Abono no encontrado.");
+            ?? throw new NotFoundException();
 
         public async Task<bool> IsPaidById(int id) =>
             await _context.ContratosAbonados.AnyAsync(ca => ca.IdContratoAbonado == id && ca.EstadoPago);

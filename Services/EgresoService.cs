@@ -26,7 +26,6 @@ namespace ViteMontevideo_API.Services
 
         public async Task<PageCursorMontoResponse<EgresoResponseDto>> GetAllPageCursor(FiltroEgreso filtro)
         {
-            const int MaxRegistros = 200;
             var query = _egresoRepository.Query();
 
             query = query.Where(e => e.Fecha >= filtro.FechaInicio && e.Fecha <= filtro.FechaFinal);
@@ -34,7 +33,7 @@ namespace ViteMontevideo_API.Services
             int cantidad = query.Count();
             decimal totalMonto = query.Sum(e => e.Monto);
 
-            query = _egresoRepository.ApplyPageCursor(query, filtro.Cursor, filtro.Count, MaxRegistros, e => e.IdEgreso);
+            query = _egresoRepository.ApplyPageCursor(query, filtro.Cursor, filtro.Count, e => e.IdEgreso);
 
             var data = await query
                 .OrderByDescending(e => e.IdEgreso)
@@ -72,11 +71,12 @@ namespace ViteMontevideo_API.Services
 
         public async Task<ApiResponse> Update(int id, EgresoActualizarRequestDto egreso)
         {
-            bool hasCajaChicaOpen = await _egresoRepository.HasOpenCajaChicaById(id);
-            if (!hasCajaChicaOpen)
+            var dbEgreso = await _egresoRepository.GetById(id);
+
+            bool hasClosedCajaChica = await _egresoRepository.HasClosedCajaChicaById(id);
+            if (hasClosedCajaChica)
                 throw new BadRequestException("La caja chica en donde el egreso se encuentra esta cerrada. Por lo tanto, no se puede modificar.");
 
-            var dbEgreso = await _egresoRepository.GetById(id);
             dbEgreso.Motivo = egreso.Motivo;
             dbEgreso.Monto = egreso.Monto;
             dbEgreso.Hora = egreso.Hora;
@@ -88,11 +88,13 @@ namespace ViteMontevideo_API.Services
 
         public async Task<ApiResponse> DeleteById(int id)
         {
-            bool hasOpenCajaChica = await _egresoRepository.HasOpenCajaChicaById(id);
-            if(!hasOpenCajaChica)
+            var dbEgreso = await _egresoRepository.GetById(id);
+
+            bool hasClosedCajaChica = await _egresoRepository.HasClosedCajaChicaById(id);
+            if(hasClosedCajaChica)
                 throw new BadRequestException("La caja chica en donde el egreso se encuentra esta cerrada. Por lo tanto, no se puede eliminar.");
 
-            await _egresoRepository.DeleteById(id);
+            await _egresoRepository.Delete(dbEgreso);
             return ApiResponse.Success("La caja chica ha sido eliminada.");
         }
     }

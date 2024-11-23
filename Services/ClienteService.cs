@@ -26,7 +26,6 @@ namespace ViteMontevideo_API.Services
 
         public async Task<PageCursorResponse<ClienteResponseDto>> GetAllPageCursor(FiltroCliente filtro)
         {
-            const int MaxRegistros = 200;
             var query = _repository.Query();
 
             if (!string.IsNullOrWhiteSpace(filtro.NombreCompleto))
@@ -44,7 +43,7 @@ namespace ViteMontevideo_API.Services
 
             int cantidad = query.Count();
 
-            query = _repository.ApplyPageCursor(query, filtro.Cursor, filtro.Count, MaxRegistros, c => c.IdCliente);
+            query = _repository.ApplyPageCursor(query, filtro.Cursor, filtro.Count, c => c.IdCliente);
 
             var data = await query
                 .OrderByDescending(c => c.IdCliente)
@@ -92,6 +91,8 @@ namespace ViteMontevideo_API.Services
 
         public async Task<ApiResponse> DeleteById(int id)
         {
+            var dbCliente = await _repository.GetById(id);
+
             bool hasComerciosAdicionales = await _repository.HasComerciosAdicionalesById(id);
             bool hasVehiculos = await _repository.HasVehiculosById(id);
 
@@ -100,7 +101,7 @@ namespace ViteMontevideo_API.Services
                 throw new BadRequestException("No se puede eliminar este cliente porque tiene vehículo(s) y/o comercio(s) adicional(es).");
             }
 
-            await _repository.DeleteById(id);
+            await _repository.Delete(dbCliente);
             return ApiResponse.Success("El cliente ha sido eliminado.");
         }
 

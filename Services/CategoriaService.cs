@@ -58,12 +58,13 @@ namespace ViteMontevideo_API.Services
 
         public async Task<ApiResponse> DeleteById(short id)
         {
+            var dbCategoria = await _repository.GetById(id);
             var hasTariff = await _repository.HasTarifasById(id);
             if(hasTariff)
             {
                 throw new BadRequestException("No se puede eliminar esta categoría porque esta vinculada a una o varias tarifas.");
             }
-            await _repository.DeleteById(id);
+            await _repository.Delete(dbCategoria);
             return ApiResponse.Success("La categoría ha sido eliminado");
         }
 

@@ -45,7 +45,7 @@ namespace ViteMontevideo_API.Persistence.Repositories
             await _context.Trabajadores
                 .Include(t => t.Cargo)
                 .FirstOrDefaultAsync(t => t.IdTrabajador == id)
-            ?? throw new NotFoundException("Trabajador no encontrado.");
+            ?? throw new NotFoundException();
 
         public async Task<bool> HasCajasChicasById(short id) =>
             await _context.Trabajadores.AnyAsync(t => t.IdTrabajador == id && t.CajasChicas.Any());

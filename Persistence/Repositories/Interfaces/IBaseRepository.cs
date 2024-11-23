@@ -5,11 +5,11 @@ namespace ViteMontevideo_API.Persistence.Repositories.Interfaces
     public interface IBaseRepository<TId, TEntity> where TEntity : class
     {
         IQueryable<TEntity> Query();
-        IQueryable<TEntity> ApplyPageCursor(IQueryable<TEntity> query, int cursor, int count, int MaxRegisters, Expression<Func<TEntity, int>> idSelector);
+        IQueryable<TEntity> ApplyPageCursor(IQueryable<TEntity> query, int cursor, int count, Expression<Func<TEntity, int>> idSelector);
         Task<IEnumerable<TEntity>> GetAll();
         Task<TEntity> GetById(TId id);
         Task<TEntity> Insert(TEntity entity);
         Task<TEntity> Update(TEntity entity);
-        Task DeleteById(TId id);
+        Task Delete(TEntity id);
     }
 }

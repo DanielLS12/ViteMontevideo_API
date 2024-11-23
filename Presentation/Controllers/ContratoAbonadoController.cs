@@ -44,7 +44,7 @@ namespace ViteMontevideo_API.Presentation.Controllers
 
         [HttpPut("{id}")]
         [ServiceFilter(typeof(ValidationFilterAttribute))]
-        public async Task<IActionResult> Editar([FromRoute] int id, [FromBody] ContratoAbonadoActualizarRequestDto request)
+        public async Task<IActionResult> Update([FromRoute] int id, [FromBody] ContratoAbonadoActualizarRequestDto request)
         {
             var response = await _service.Update(id,request);
             return Ok(response);
@@ -52,21 +52,21 @@ namespace ViteMontevideo_API.Presentation.Controllers
 
         [HttpPatch("{id}/pagar")]
         [ServiceFilter(typeof(ValidationFilterAttribute))]
-        public async Task<IActionResult> Pagar([FromRoute] int id, [FromBody] ContratoAbonadoPagarRequestDto request)
+        public async Task<IActionResult> Pay([FromRoute] int id, [FromBody] ContratoAbonadoPagarRequestDto request)
         {
             var response = await _service.Pay(id,request);
             return Ok(response);
         }
 
         [HttpPatch("{id}/anular-pago")]
-        public async Task<IActionResult> AnularPago([FromRoute] int id)
+        public async Task<IActionResult> CancelPayment([FromRoute] int id)
         {
             var response = await _service.CancelPayment(id);
             return Ok(response);
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Eliminar(int id)
+        public async Task<IActionResult> DeleteById(int id)
         {
             var response = await _service.DeleteById(id);
             return Ok(response);

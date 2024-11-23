@@ -32,7 +32,6 @@ namespace ViteMontevideo_API.Services
 
         public async Task<PageCursorResponse<VehiculoResponseDto>> GetAllPageCursor(FiltroVehiculo filtro)
         {
-            const int MaxRegisters = 200;
             var query = _vehiculoRepository.Query();
 
             if (!string.IsNullOrWhiteSpace(filtro.Placa) && filtro.Placa.Length >= 3)
@@ -40,7 +39,7 @@ namespace ViteMontevideo_API.Services
 
             int cantidad = await query.CountAsync();
 
-            query = _vehiculoRepository.ApplyPageCursor(query, filtro.Cursor, filtro.Count, MaxRegisters, v => v.IdVehiculo);
+            query = _vehiculoRepository.ApplyPageCursor(query, filtro.Cursor, filtro.Count, v => v.IdVehiculo);
 
             var data = await query
                 .OrderByDescending(v => v.IdVehiculo)
@@ -71,13 +70,13 @@ namespace ViteMontevideo_API.Services
         {
             bool existsTarifa = await _tarifaRepository.ExistsById(vehiculo.IdTarifa);
             if (!existsTarifa)
-                throw new NotFoundException("La tarifa que intento vincular al vehículo no existe.");
+                throw new BadRequestException("La tarifa que intento vincular al vehículo no existe.");
 
             if(vehiculo.IdCliente != null)
             {
                 bool existsCliente = await _clienteRepository.ExistsById((int)vehiculo.IdCliente);
                 if (!existsCliente)
-                    throw new NotFoundException("El cliente que intento vincular al vehículo no existe.");
+                    throw new BadRequestException("El cliente que intento vincular al vehículo no existe.");
             }
 
             bool existsPlaca = await _vehiculoRepository.ExistsByPlaca(vehiculo.Placa);
@@ -101,13 +100,13 @@ namespace ViteMontevideo_API.Services
 
             bool existsTarifa = await _tarifaRepository.ExistsById(vehiculo.IdTarifa);
             if(!existsTarifa)
-                throw new NotFoundException("La tarifa que intento vincular al vehículo no existe.");
+                throw new BadRequestException("La tarifa que intento vincular al vehículo no existe.");
 
             if (vehiculo.IdCliente != null)
             {
                 bool existsCliente = await _clienteRepository.ExistsById((int)vehiculo.IdCliente);
                 if (!existsCliente)
-                    throw new NotFoundException("El cliente que intento vincular al vehículo no existe.");
+                    throw new BadRequestException("El cliente que intento vincular al vehículo no existe.");
             }
 
             var dbVehiculo = await _vehiculoRepository.GetById(id);
@@ -124,13 +123,15 @@ namespace ViteMontevideo_API.Services
 
         public async Task<ApiResponse> DeleteById(int id)
         {
+            var dbVehiculo = await _vehiculoRepository.GetById(id);
+
             bool hasAbonados = await _vehiculoRepository.HasAbonadosById(id);
             bool hasServicios = await _vehiculoRepository.HasServiciosById(id);
 
             if (hasAbonados || hasServicios)
                 throw new BadRequestException("No se puede eliminar este vehículo porque tiene abonado(s) y/o servicio(s) registrados.");
 
-            await _vehiculoRepository.DeleteById(id);
+            await _vehiculoRepository.Delete(dbVehiculo);
             return ApiResponse.Success("El vehículo ha sido eliminado.");
         }
     }

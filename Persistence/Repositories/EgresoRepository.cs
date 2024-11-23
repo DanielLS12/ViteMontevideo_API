@@ -12,7 +12,7 @@ namespace ViteMontevideo_API.Persistence.Repositories
         {
         }
 
-        public async Task<bool> HasOpenCajaChicaById(int id) =>
-            await _context.Egresos.AnyAsync(e => e.IdEgreso == id && e.CajaChica.Estado);
+        public async Task<bool> HasClosedCajaChicaById(int id) =>
+            await _context.Egresos.AnyAsync(e => e.IdEgreso == id && !e.CajaChica.Estado);
     }
 }

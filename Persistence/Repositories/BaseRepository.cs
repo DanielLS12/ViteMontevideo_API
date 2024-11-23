@@ -11,6 +11,8 @@ namespace ViteMontevideo_API.Repositories
         protected readonly ILogger<BaseRepository<TId, TEntity>> _logger;
         protected readonly EstacionamientoContext _context;
 
+        private const int MaxRegistros = 200;
+
         public BaseRepository(EstacionamientoContext context, ILogger<BaseRepository<TId, TEntity>> logger)
         {
             _context = context;
@@ -19,7 +21,7 @@ namespace ViteMontevideo_API.Repositories
 
         public IQueryable<TEntity> Query() => _context.Set<TEntity>().AsNoTracking().AsQueryable();
 
-        public IQueryable<TEntity> ApplyPageCursor(IQueryable<TEntity> query, int cursor, int count, int MaxRegisters, Expression<Func<TEntity, int>> idSelector)
+        public IQueryable<TEntity> ApplyPageCursor(IQueryable<TEntity> query, int cursor, int count, Expression<Func<TEntity, int>> idSelector)
         {
             var memberExpression = idSelector.Body as MemberExpression 
                 ?? throw new ArgumentException("El idSelector debe ser una expresión de propiedad.", nameof(idSelector));
@@ -29,7 +31,7 @@ namespace ViteMontevideo_API.Repositories
             if (cursor > 0)
                 query = query.Where(e => EF.Property<int>(e, propertyName) < cursor);
 
-            return query.Take(count > MaxRegisters ? MaxRegisters : count);
+            return query.Take(count > MaxRegistros ? MaxRegistros : count);
         }
 
         public virtual async Task<IEnumerable<TEntity>> GetAll() =>
@@ -40,11 +42,13 @@ namespace ViteMontevideo_API.Repositories
         public virtual async Task<TEntity> GetById(TId id)
         {
             var entity = await _context.FindAsync<TEntity>(id);
+
             if(entity == null)
             {
-                _logger.LogWarning("No se encontro el recurso con ID: '{@id}'. {@method} - {Time}",id,nameof(GetById),DateTime.UtcNow);
-                throw new NotFoundException("No se encontro el recurso.");
+                _logger.LogWarning("No se encontro el recurso con ID: '{@id}'. {@method} - {Time}", id, nameof(GetById), DateTime.UtcNow);
+                throw new NotFoundException();
             }
+
             return entity;
         }
 
@@ -52,7 +56,10 @@ namespace ViteMontevideo_API.Repositories
         {
             await _context.AddAsync(entity);
             await _context.SaveChangesAsync();
-            _logger.LogInformation("Recurso creado en '{@method}' con la entidad '{@entity}' - {Time}", nameof(Insert), nameof(TEntity), DateTime.UtcNow);
+
+            string entityType = entity.GetType().Name;
+
+            _logger.LogInformation("Recurso creado en '{@method}' con la entidad '{@entity}' - {Time}", nameof(Insert), entityType, DateTime.UtcNow);
             return entity;
         }
 
@@ -60,21 +67,21 @@ namespace ViteMontevideo_API.Repositories
         {
             _context.Update(entity);
             await _context.SaveChangesAsync();
-            _logger.LogInformation("Recurso actualizado en '{@method}' con la entidad '{@entity}' - {Time}", nameof(Update), nameof(TEntity), DateTime.UtcNow);
+
+            string entityType = entity.GetType().Name;
+
+            _logger.LogInformation("Recurso actualizado en '{@method}' con la entidad '{@entity}' - {Time}", nameof(Update), entityType, DateTime.UtcNow);
             return entity;
         }
 
-        public virtual async Task DeleteById(TId id)
+        public virtual async Task Delete(TEntity entity)
         {
-            var entity = await _context.FindAsync<TEntity>(id);
-            if (entity == null)
-            {
-                _logger.LogWarning("No se encontró el recurso con ID: '{@id}'. '{@method}' - {Time}",id,nameof(DeleteById),DateTime.UtcNow);
-                throw new NotFoundException("No se encontró el recurso.");
-            }
             _context.Remove(entity);
             await _context.SaveChangesAsync();
-            _logger.LogInformation("Recurso eliminado en '{@method}' con ID '{@id}'. {Time}",nameof(DeleteById),id,DateTime.UtcNow);
+
+            string entityType = entity.GetType().Name;
+
+            _logger.LogInformation("Recurso eliminado en '{@method}' con la entidad '{@entity}'. {Time}",nameof(Delete), entityType, DateTime.UtcNow);
         }
     }
 }

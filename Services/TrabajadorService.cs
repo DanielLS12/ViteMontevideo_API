@@ -105,11 +105,13 @@ namespace ViteMontevideo_API.Services
 
         public async Task<ApiResponse> DeleteById(short id)
         {
+            var dbTrabajador = await _trabajadorRepository.GetById(id);
+
             var hasCajasChicas = await _trabajadorRepository.HasCajasChicasById(id);
             if (hasCajasChicas)
                 throw new BadRequestException("No se puede eliminar este trabajador porque tiene cajas chicas registradas a su nombre.");
 
-            await _trabajadorRepository.DeleteById(id);
+            await _trabajadorRepository.Delete(dbTrabajador);
             return ApiResponse.Success("El trabajador ha sido eliminado.");
         }
 

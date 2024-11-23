@@ -30,7 +30,7 @@ namespace ViteMontevideo_API.Persistence.Repositories
                     .ThenInclude(t => t.Actividad)
                 .Include(v => v.Cliente)
                 .FirstOrDefaultAsync(v => v.IdVehiculo == id) 
-            ?? throw new NotFoundException("Vehículo no encontrado");
+            ?? throw new NotFoundException();
 
         public async Task<Vehiculo> GetByPlaca(string placa) =>
             await _context.Vehiculos
@@ -41,7 +41,7 @@ namespace ViteMontevideo_API.Persistence.Repositories
                 .Include(v => v.Cliente)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(v => v.Placa == placa.ToUpper())
-            ?? throw new NotFoundException("Vehículo no encontrado.");
+            ?? throw new NotFoundException();
 
         public async Task<bool> HasAbonadosById(int id) =>
             await _context.Vehiculos.AnyAsync(v => v.IdVehiculo == id && v.ContratosAbonados.Any());

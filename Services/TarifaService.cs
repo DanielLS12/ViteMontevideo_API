@@ -96,13 +96,15 @@ namespace ViteMontevideo_API.Services
 
         public async Task<ApiResponse> DeleteById(short id)
         {
+            var dbTarifa = await _tarifaRepository.GetById(id);
+
             bool hasVehicles = await _tarifaRepository.HasVehiculosById(id);
             bool hasServices = await _tarifaRepository.HasServiciosById(id);
 
             if (hasVehicles || hasServices)
                 throw new BadRequestException("No se puede eliminar esta tarifa porque esta vinculado a algunos vehículo(s) y/o servicio(s).");
 
-            await _tarifaRepository.DeleteById(id);
+            await _tarifaRepository.Delete(dbTarifa);
             return ApiResponse.Success("La tarifa ha sido eliminada.");
         }
     }

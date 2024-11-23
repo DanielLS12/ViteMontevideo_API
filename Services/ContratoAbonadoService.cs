@@ -169,6 +169,8 @@ namespace ViteMontevideo_API.Services
 
         public async Task<ApiResponse> DeleteById(int id)
         {
+            var dbContratoAbonado = await _contratoAbonadoRepository.GetById(id);
+
             bool hasClosedCajaChica = await _contratoAbonadoRepository.HasClosedCajaChicaById(id);
             if (hasClosedCajaChica)
                 throw new BadRequestException("La caja chica en donde el abono se encuentra está cerrada. Por lo tanto, no se puede eliminar.");
@@ -177,7 +179,7 @@ namespace ViteMontevideo_API.Services
             if (isPaid)
                 throw new BadRequestException("El abono ya ha sido pagado, por lo que no es posible eliminarlo.");
 
-            await _contratoAbonadoRepository.DeleteById(id);
+            await _contratoAbonadoRepository.Delete(dbContratoAbonado);
             return ApiResponse.Success("El abono ha sido eliminado.");
         }
     }
