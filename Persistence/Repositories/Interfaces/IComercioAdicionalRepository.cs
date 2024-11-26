@@ -2,9 +2,8 @@
 
 namespace ViteMontevideo_API.Persistence.Repositories.Interfaces
 {
-    public interface IContratoAbonadoRepository : IBaseRepository<int, ContratoAbonado>
+    public interface IComercioAdicionalRepository : IBaseRepository<int, ComercioAdicional>
     {
         Task<bool> HasClosedCajaChicaById(int id);
-        Task<bool> HasAnyInProgressByIdVehiculo(int idVehiculo);
     }
 }

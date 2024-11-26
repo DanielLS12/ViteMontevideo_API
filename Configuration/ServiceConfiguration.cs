@@ -61,6 +61,7 @@ namespace ViteMontevideo_API.Configuration
             services.AddScoped<ITrabajadorRepository, TrabajadorRepository>();
             services.AddScoped<IContratoAbonadoRepository, ContratoAbonadoRepository>();
             services.AddScoped<IServicioRepository, ServicioRepository>();
+            services.AddScoped<IComercioAdicionalRepository, ComercioAdicionalRepository>();
 
             // Services
             services.AddScoped<IActividadService, ActividadService>();
@@ -72,6 +73,7 @@ namespace ViteMontevideo_API.Configuration
             services.AddScoped<IEgresoService, EgresoService>();
             services.AddScoped<ITrabajadorService, TrabajadorService>();
             services.AddScoped<IContratoAbonadoService, ContratoAbonadoService>();
+            services.AddScoped<IComercioAdicionalService, ComercioAdicionalService>();
 
             services.AddTransient<ErrorHandlerMiddleware>();
             services.AddScoped<ValidationFilterAttribute>();
