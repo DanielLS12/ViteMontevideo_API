@@ -1,4 +1,4 @@
-﻿namespace ViteMontevideo_API.Exceptions
+﻿namespace ViteMontevideo_API.Shared.Exceptions
 {
     public class ConflictException : Exception
     {

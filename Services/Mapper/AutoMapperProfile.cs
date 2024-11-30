@@ -11,11 +11,11 @@ using ViteMontevideo_API.Presentation.Dtos.Trabajadores;
 using ViteMontevideo_API.Presentation.Dtos.Usuarios;
 using ViteMontevideo_API.Presentation.Dtos.Vehiculos;
 
-namespace ViteMontevideo_API.Mapper
+namespace ViteMontevideo_API.Services.Mapper
 {
     public class AutoMapperProfile : Profile
     {
-        public AutoMapperProfile() 
+        public AutoMapperProfile()
         {
             // Cajas Chicas
             CreateMap<CajaChicaCrearRequestDto, CajaChica>();
@@ -41,11 +41,13 @@ namespace ViteMontevideo_API.Mapper
             CreateMap<Egreso, EgresoResponseDto>();
 
             // Servicios
-            CreateMap<Servicio, ServicioCrearRequestDto>();
+            CreateMap<ServicioCrearRequestDto, Servicio>();
+            CreateMap<Servicio, ServicioSalidaResponseDto>();
+            CreateMap<Servicio, ServicioEntradaResponseDto>();
 
             // Tarifas
             CreateMap<TarifaCrearRequestDto, Tarifa>();
-            CreateMap<Tarifa,TarifaResponseDto>();
+            CreateMap<Tarifa, TarifaResponseDto>();
 
             // Trabajadores
             CreateMap<TrabajadorCrearRequestDto, Trabajador>();
@@ -56,8 +58,9 @@ namespace ViteMontevideo_API.Mapper
 
             // Vehiculos
             CreateMap<VehiculoCrearRequestDto, Vehiculo>();
-            CreateMap<Vehiculo, VehiculoResponseDto>();
-            CreateMap<Vehiculo, VehiculoSimplificadoDto>();
+            CreateMap<Vehiculo, VehiculoFullResponseDto>();
+            CreateMap<Vehiculo, VehiculoDetailResponseDto>();
+            CreateMap<Vehiculo, VehiculoSimplificadoResponseDto>();
         }
     }
 }

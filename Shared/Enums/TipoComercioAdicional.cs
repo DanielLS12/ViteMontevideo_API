@@ -1,4 +1,4 @@
-﻿namespace ViteMontevideo_API.Persistence.Models
+﻿namespace ViteMontevideo_API.Helpers.Enums
 {
     public enum TipoComercioAdicional
     {
