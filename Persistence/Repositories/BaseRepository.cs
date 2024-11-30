@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
-using ViteMontevideo_API.Exceptions;
 using ViteMontevideo_API.Persistence.Context;
 using ViteMontevideo_API.Persistence.Repositories.Interfaces;
 
@@ -39,16 +38,13 @@ namespace ViteMontevideo_API.Repositories
                 .AsNoTracking()
                 .ToListAsync();
 
-        public virtual async Task<TEntity> GetById(TId id)
+        public virtual async Task<TEntity?> GetById(TId id)
         {
             var entity = await _context.FindAsync<TEntity>(id);
 
             if(entity == null)
-            {
                 _logger.LogWarning("No se encontro el recurso con ID: '{@id}'. {@method} - {Time}", id, nameof(GetById), DateTime.UtcNow);
-                throw new NotFoundException();
-            }
-
+            
             return entity;
         }
 

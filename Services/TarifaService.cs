@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using ViteMontevideo_API.Exceptions;
+using ViteMontevideo_API.Shared.Exceptions;
 using ViteMontevideo_API.Persistence.Models;
 using ViteMontevideo_API.Persistence.Repositories.Interfaces;
 using ViteMontevideo_API.Presentation.Dtos.Common;
@@ -33,7 +33,9 @@ namespace ViteMontevideo_API.Services
 
         public async Task<TarifaResponseDto> GetById(short id)
         {
-            var tarifa = await _tarifaRepository.GetById(id);
+            var tarifa = await _tarifaRepository.GetById(id)
+                ?? throw new NotFoundException("Tarifa no encontrada.");
+
             return _mapper.Map<TarifaResponseDto>(tarifa);
 
         }
@@ -45,9 +47,6 @@ namespace ViteMontevideo_API.Services
 
             if (tarifa.HoraDia.HasValue && tarifa.HoraNoche.HasValue && tarifa.HoraDia >= tarifa.HoraNoche)
                 throw new BadRequestException("La hora día no puede ser mayor o igual a la hora noche.");
-
-            if (!tarifa.HoraDia.HasValue && !tarifa.HoraNoche.HasValue && tarifa.PrecioDia != tarifa.PrecioNoche)
-                throw new BadRequestException("Si no existen horas día y noche es porque tiene la modalidad de 'Hora', por lo tanto, sus precios deben ser iguales.");
 
             bool existsCategoria = await _categoriaRepository.ExistsById(tarifa.IdCategoria);
             if (!existsCategoria)
@@ -76,10 +75,8 @@ namespace ViteMontevideo_API.Services
             if (tarifa.HoraDia.HasValue && tarifa.HoraNoche.HasValue && tarifa.HoraDia >= tarifa.HoraNoche)
                 throw new BadRequestException("La hora día no puede ser mayor o igual a la hora noche.");
 
-            if (!tarifa.HoraDia.HasValue && !tarifa.HoraNoche.HasValue && tarifa.PrecioDia != tarifa.PrecioNoche)
-                throw new BadRequestException("Si no existen horas día y noche es porque tiene la modalidad de 'Hora', por lo tanto, sus precios deben ser iguales.");
-
-            var dbTarifa = await _tarifaRepository.GetById(id);
+            var dbTarifa = await _tarifaRepository.GetById(id)
+                ?? throw new NotFoundException("Tarifa no encontrada.");
 
             if (dbTarifa.HoraDia.HasValue != tarifa.HoraDia.HasValue || dbTarifa.HoraNoche.HasValue != tarifa.HoraNoche.HasValue)
                 throw new BadRequestException($"No se puede cambiar la modalidad de la tarifa. La tarifa actual es '{(dbTarifa.HoraDia.HasValue ? "Turno" : "Hora")}' y se intenta cambiar a '{(tarifa.HoraDia.HasValue ? "Turno" : "Hora")}'.");
@@ -96,7 +93,8 @@ namespace ViteMontevideo_API.Services
 
         public async Task<ApiResponse> DeleteById(short id)
         {
-            var dbTarifa = await _tarifaRepository.GetById(id);
+            var dbTarifa = await _tarifaRepository.GetById(id)
+                ?? throw new NotFoundException("Tarifa no encontrada.");
 
             bool hasVehicles = await _tarifaRepository.HasVehiculosById(id);
             bool hasServices = await _tarifaRepository.HasServiciosById(id);

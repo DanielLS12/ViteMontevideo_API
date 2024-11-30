@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using ViteMontevideo_API.Exceptions;
 using ViteMontevideo_API.Persistence.Context;
 using ViteMontevideo_API.Persistence.Models;
 using ViteMontevideo_API.Persistence.Repositories.Interfaces;
@@ -41,11 +40,10 @@ namespace ViteMontevideo_API.Persistence.Repositories
                 .AsNoTracking()
                 .ToListAsync();
 
-        public override async Task<Trabajador> GetById(short id) =>
+        public override async Task<Trabajador?> GetById(short id) =>
             await _context.Trabajadores
                 .Include(t => t.Cargo)
-                .FirstOrDefaultAsync(t => t.IdTrabajador == id)
-            ?? throw new NotFoundException();
+                .FirstOrDefaultAsync(t => t.IdTrabajador == id);
 
         public async Task<bool> HasCajasChicasById(short id) =>
             await _context.Trabajadores.AnyAsync(t => t.IdTrabajador == id && t.CajasChicas.Any());

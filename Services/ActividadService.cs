@@ -1,6 +1,6 @@
 ﻿using System.Globalization;
 using System.Text.RegularExpressions;
-using ViteMontevideo_API.Exceptions;
+using ViteMontevideo_API.Shared.Exceptions;
 using ViteMontevideo_API.Persistence.Models;
 using ViteMontevideo_API.Persistence.Repositories.Interfaces;
 using ViteMontevideo_API.Presentation.Dtos.Common;
@@ -25,7 +25,7 @@ namespace ViteMontevideo_API.Services
         }
 
         public async Task<Actividad> GetById(short id) =>
-            await _repository.GetById(id);
+            await _repository.GetById(id) ?? throw new NotFoundException("Actividad no encontrada.");
 
         public async Task<ApiResponse> Insert(Actividad actividad)
         {
@@ -50,20 +50,24 @@ namespace ViteMontevideo_API.Services
                 throw new BadRequestException("Ya existe una actividad con ese nombre.");
             }
 
-            var dbActividad = await _repository.GetById(id);
+            var dbActividad = await _repository.GetById(id) 
+                ?? throw new NotFoundException("Actividad no encontrada.");
+
             dbActividad.Nombre = actividad.Nombre;
+
             var updatedActividad = await _repository.Update(dbActividad);
             return ApiResponse.Success("La actividad ha sido actualizada.", updatedActividad);
         }
 
         public async Task<ApiResponse> DeleteById(short id)
         {
-            var actividad = await _repository.GetById(id);
+            var actividad = await _repository.GetById(id) 
+                ?? throw new NotFoundException("Actividad no encontrada.");
+
             var hasTariff = await _repository.HasTarifasById(id);
             if (hasTariff)
-            {
                 throw new BadRequestException("No se puede eliminar esta actividad porque esta vinculada a una o varias tarifas.");
-            }
+
             await _repository.Delete(actividad);
             return ApiResponse.Success("La actividad ha sido eliminada");
         }

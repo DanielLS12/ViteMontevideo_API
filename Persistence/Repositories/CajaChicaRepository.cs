@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using ViteMontevideo_API.Exceptions;
 using ViteMontevideo_API.Persistence.Context;
 using ViteMontevideo_API.Persistence.Models;
 using ViteMontevideo_API.Persistence.Repositories.Interfaces;
@@ -13,7 +12,10 @@ namespace ViteMontevideo_API.Persistence.Repositories
         {
         }
 
-        public async Task<CajaChica?> GetByEstadoTrue() =>
-            await _context.CajasChicas.FirstOrDefaultAsync(cc => cc.Estado == true);
+        public async Task<CajaChica?> GetOpenCajaChica() =>
+            await _context.CajasChicas.FirstOrDefaultAsync(cc => cc.Estado);
+
+        public async Task<bool> IsCajaChicaClosedById(int id) =>
+            await _context.CajasChicas.AnyAsync(cc => cc.IdCaja == id && !cc.Estado);
     }
 }

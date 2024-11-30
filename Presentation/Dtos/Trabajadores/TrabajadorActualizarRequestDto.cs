@@ -4,7 +4,6 @@ namespace ViteMontevideo_API.Presentation.Dtos.Trabajadores
 {
     public class TrabajadorActualizarRequestDto
     {
-        [Required(ErrorMessage = "El id del cargo es requerido.")]
         public byte IdCargo { get; set; }
 
         [Required(ErrorMessage = "El nombre es requerido.")]

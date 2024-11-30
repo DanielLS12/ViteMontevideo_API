@@ -4,6 +4,5 @@ namespace ViteMontevideo_API.Persistence.Repositories.Interfaces
 {
     public interface IEgresoRepository : IBaseRepository<int, Egreso>
     {
-        Task<bool> HasClosedCajaChicaById(int id);
     }
 }

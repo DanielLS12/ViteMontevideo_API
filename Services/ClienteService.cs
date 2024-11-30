@@ -3,7 +3,7 @@ using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 using System.Text.RegularExpressions;
-using ViteMontevideo_API.Exceptions;
+using ViteMontevideo_API.Shared.Exceptions;
 using ViteMontevideo_API.Persistence.Models;
 using ViteMontevideo_API.Persistence.Repositories.Interfaces;
 using ViteMontevideo_API.Presentation.Dtos.Clientes;
@@ -60,7 +60,9 @@ namespace ViteMontevideo_API.Services
 
         public async Task<ClienteDto> GetById(int id)
         {
-            var cliente = await _repository.GetById(id);
+            var cliente = await _repository.GetById(id) 
+                ?? throw new NotFoundException("Cliente no encontrado.");
+
             return _mapper.Map<ClienteDto>(cliente);
         }
 
@@ -77,7 +79,8 @@ namespace ViteMontevideo_API.Services
         {
             cliente = LimpiarDatos(cliente);
 
-            var dbCliente = await _repository.GetById(id);
+            var dbCliente = await _repository.GetById(id) 
+                ?? throw new NotFoundException("Cliente no encontrado.");
 
             dbCliente.Nombres = cliente.Nombres;
             dbCliente.Apellidos = cliente.Apellidos;
@@ -91,7 +94,8 @@ namespace ViteMontevideo_API.Services
 
         public async Task<ApiResponse> DeleteById(int id)
         {
-            var dbCliente = await _repository.GetById(id);
+            var dbCliente = await _repository.GetById(id) 
+                ?? throw new NotFoundException("Cliente no encontrado.");
 
             bool hasComerciosAdicionales = await _repository.HasComerciosAdicionalesById(id);
             bool hasVehiculos = await _repository.HasVehiculosById(id);

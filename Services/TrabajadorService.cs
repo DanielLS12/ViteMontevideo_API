@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 using System.Globalization;
 using System.Text.RegularExpressions;
-using ViteMontevideo_API.Exceptions;
+using ViteMontevideo_API.Shared.Exceptions;
 using ViteMontevideo_API.Persistence.Models;
 using ViteMontevideo_API.Persistence.Repositories.Interfaces;
 using ViteMontevideo_API.Presentation.Dtos.Common;
@@ -34,7 +34,9 @@ namespace ViteMontevideo_API.Services
 
         public async Task<TrabajadorResponseDto> GetById(short id)
         {
-            var trabajador = await _trabajadorRepository.GetById(id);
+            var trabajador = await _trabajadorRepository.GetById(id)
+                ?? throw new NotFoundException("Trabajador no encontrado.");
+
             return _mapper.Map<TrabajadorResponseDto>(trabajador);
         }
 
@@ -87,7 +89,9 @@ namespace ViteMontevideo_API.Services
             if (existsCorreo)
                 throw new ConflictException("El correo ingresado ya se encuentra registrado.");
 
-            var dbTrabajador = await _trabajadorRepository.GetById(id);
+            var dbTrabajador = await _trabajadorRepository.GetById(id)
+                ?? throw new NotFoundException("Trabajador no encontrado.");
+
             dbTrabajador.IdCargo = trabajador.IdCargo;
             dbTrabajador.Nombre = trabajador.Nombre;
             dbTrabajador.ApellidoPaterno = trabajador.ApellidoPaterno;
@@ -105,7 +109,8 @@ namespace ViteMontevideo_API.Services
 
         public async Task<ApiResponse> DeleteById(short id)
         {
-            var dbTrabajador = await _trabajadorRepository.GetById(id);
+            var dbTrabajador = await _trabajadorRepository.GetById(id)
+                ?? throw new NotFoundException("Trabajador no encontrado.");
 
             var hasCajasChicas = await _trabajadorRepository.HasCajasChicasById(id);
             if (hasCajasChicas)

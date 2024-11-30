@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
-using ViteMontevideo_API.Exceptions;
+using ViteMontevideo_API.Shared.Exceptions;
 using ViteMontevideo_API.Persistence.Models;
 using ViteMontevideo_API.Persistence.Repositories.Interfaces;
 using ViteMontevideo_API.Presentation.Dtos.Common;
@@ -50,13 +50,15 @@ namespace ViteMontevideo_API.Services
 
         public async Task<EgresoResponseDto> GetById(int id)
         {
-            var egreso = await _egresoRepository.GetById(id);
+            var egreso = await _egresoRepository.GetById(id)
+                ?? throw new NotFoundException("Egreso no encontrado.");
+
             return _mapper.Map<EgresoResponseDto>(egreso);
         }
 
         public async Task<ApiResponse> Insert(EgresoCrearRequestDto egreso)
         {
-            var cajaChicaAbierta = await _cajaChicaRepository.GetByEstadoTrue() 
+            var cajaChicaAbierta = await _cajaChicaRepository.GetOpenCajaChica() 
                 ?? throw new BadRequestException("No es posible registrar el egreso porque no hay ninguna caja chica abierta actualmente.");
 
             if (cajaChicaAbierta.FechaInicio > egreso.Fecha)
@@ -71,11 +73,12 @@ namespace ViteMontevideo_API.Services
 
         public async Task<ApiResponse> Update(int id, EgresoActualizarRequestDto egreso)
         {
-            var dbEgreso = await _egresoRepository.GetById(id);
+            var dbEgreso = await _egresoRepository.GetById(id)
+                ?? throw new NotFoundException("Egreso no encontrado."); ;
 
-            bool hasClosedCajaChica = await _egresoRepository.HasClosedCajaChicaById(id);
-            if (hasClosedCajaChica)
-                throw new BadRequestException("La caja chica en donde el egreso se encuentra esta cerrada. Por lo tanto, no se puede modificar.");
+            bool isCajaChicaClosed = await _cajaChicaRepository.IsCajaChicaClosedById(dbEgreso.IdCaja);
+            if (isCajaChicaClosed)
+                throw new BadRequestException("La caja chica que contiene el egreso está cerrada, por lo que no se puede actualizar.");
 
             dbEgreso.Motivo = egreso.Motivo;
             dbEgreso.Monto = egreso.Monto;
@@ -88,11 +91,12 @@ namespace ViteMontevideo_API.Services
 
         public async Task<ApiResponse> DeleteById(int id)
         {
-            var dbEgreso = await _egresoRepository.GetById(id);
+            var dbEgreso = await _egresoRepository.GetById(id)
+                ?? throw new NotFoundException("Egreso no encontrado.");
 
-            bool hasClosedCajaChica = await _egresoRepository.HasClosedCajaChicaById(id);
-            if(hasClosedCajaChica)
-                throw new BadRequestException("La caja chica en donde el egreso se encuentra esta cerrada. Por lo tanto, no se puede eliminar.");
+            bool isCajaChicaClosed = await _cajaChicaRepository.IsCajaChicaClosedById(dbEgreso.IdCaja);
+            if(isCajaChicaClosed)
+                throw new BadRequestException("La caja chica que contiene el egreso está cerrada, por lo que no se puede eliminar.");
 
             await _egresoRepository.Delete(dbEgreso);
             return ApiResponse.Success("La caja chica ha sido eliminada.");
