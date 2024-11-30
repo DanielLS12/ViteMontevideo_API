@@ -1,6 +1,6 @@
 ﻿using System.Net;
-using ViteMontevideo_API.Exceptions;
 using ViteMontevideo_API.Presentation.Dtos.Common;
+using ViteMontevideo_API.Shared.Exceptions;
 
 namespace ViteMontevideo_API.Configuration.Middleware
 {
@@ -47,14 +47,16 @@ namespace ViteMontevideo_API.Configuration.Middleware
 
             response.StatusCode = (int)statusCode;
 
+            bool isErrorServer = response.StatusCode >= 500 && response.StatusCode <= 599;
+
             // Solo registrar si es un error inesperado (5xx)
-            if (response.StatusCode >= 500 && response.StatusCode <= 599)
+            if (isErrorServer)
                 _logger.LogError(ex, $"Ha ocurrido un problema inesperado. {ex.Message}");
 
             var apiResponse = new ApiResponse
             {
                 Title = GetTitleForStatusCode(statusCode),
-                Message = ex.Message,
+                Message = isErrorServer ? "Ha ocurrido un error inesperado. Por favor, inténtelo más tarde." : ex.Message,
             };
 
             return response.WriteAsJsonAsync(apiResponse);

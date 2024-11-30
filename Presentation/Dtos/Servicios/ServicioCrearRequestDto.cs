@@ -4,13 +4,12 @@ namespace ViteMontevideo_API.Presentation.Dtos.Servicios
 {
     public class ServicioCrearRequestDto
     {
-        [Required(ErrorMessage = "Elegir un vehículo es requerido.")]
-        public int? IdVehiculo { get; set; }
+        [Required(ErrorMessage = "El campo placa vehicular es requerido.")]
+        [RegularExpression(@"^[A-Za-z0-9]+$", ErrorMessage = "La placa vehicular solo puede contener letras y números, sin espacios ni caracteres especiales.")]
+        public string PlacaVehicular { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "La fecha entrada es requerida.")]
-        public DateTime? FechaEntrada { get; set; }
+        public DateTime FechaEntrada { get; set; }
 
-        [Required(ErrorMessage = "La hora entrada es requerida.")]
-        public TimeSpan? HoraEntrada { get; set; }
+        public TimeSpan HoraEntrada { get; set; }
     }
 }

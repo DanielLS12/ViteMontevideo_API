@@ -74,6 +74,7 @@ namespace ViteMontevideo_API.Configuration
             services.AddScoped<ITrabajadorService, TrabajadorService>();
             services.AddScoped<IContratoAbonadoService, ContratoAbonadoService>();
             services.AddScoped<IComercioAdicionalService, ComercioAdicionalService>();
+            services.AddScoped<IServicioService, ServicioService>();
 
             services.AddTransient<ErrorHandlerMiddleware>();
             services.AddScoped<ValidationFilterAttribute>();
