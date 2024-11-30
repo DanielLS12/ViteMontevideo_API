@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
-using ViteMontevideo_API.Exceptions;
+using ViteMontevideo_API.Shared.Exceptions;
 using ViteMontevideo_API.Persistence.Models;
 using ViteMontevideo_API.Persistence.Repositories.Interfaces;
 using ViteMontevideo_API.Presentation.Dtos.Common;
@@ -30,7 +30,7 @@ namespace ViteMontevideo_API.Services
             _mapper = mapper;
         }
 
-        public async Task<PageCursorResponse<VehiculoResponseDto>> GetAllPageCursor(FiltroVehiculo filtro)
+        public async Task<PageCursorResponse<VehiculoFullResponseDto>> GetAllPageCursor(FiltroVehiculo filtro)
         {
             var query = _vehiculoRepository.Query();
 
@@ -43,7 +43,7 @@ namespace ViteMontevideo_API.Services
 
             var data = await query
                 .OrderByDescending(v => v.IdVehiculo)
-                .ProjectTo<VehiculoResponseDto>(_mapper.ConfigurationProvider)
+                .ProjectTo<VehiculoFullResponseDto>(_mapper.ConfigurationProvider)
                 .ToListAsync();
 
             int siguienteCursor = data.Any() ? (data.LastOrDefault()?.IdVehiculo ?? 0) : 0;
@@ -51,19 +51,23 @@ namespace ViteMontevideo_API.Services
             if (siguienteCursor == 0)
                 cantidad = 0;
 
-            return new PageCursorResponse<VehiculoResponseDto>(cantidad, siguienteCursor,data);
+            return new PageCursorResponse<VehiculoFullResponseDto>(cantidad, siguienteCursor,data);
         }
 
-        public async Task<VehiculoResponseDto> GetById(int id)
+        public async Task<VehiculoFullResponseDto> GetById(int id)
         {
-            var vehiculo = await _vehiculoRepository.GetById(id);
-            return _mapper.Map<VehiculoResponseDto>(vehiculo);
+            var vehiculo = await _vehiculoRepository.GetById(id)
+                ?? throw new NotFoundException("Vehículo no encontrado.");
+
+            return _mapper.Map<VehiculoFullResponseDto>(vehiculo);
         }
 
-        public async Task<VehiculoResponseDto> GetByPlaca(string placa)
+        public async Task<VehiculoFullResponseDto> GetByPlaca(string placa)
         {
-            var vehiculo = await _vehiculoRepository.GetByPlaca(placa);
-            return _mapper.Map<VehiculoResponseDto>(vehiculo);
+            var vehiculo = await _vehiculoRepository.GetByPlaca(placa)
+                ?? throw new NotFoundException("Vehículo no encontrado.");
+
+            return _mapper.Map<VehiculoFullResponseDto>(vehiculo);
         }
 
         public async Task<ApiResponse> Insert(VehiculoCrearRequestDto vehiculo)
@@ -88,16 +92,12 @@ namespace ViteMontevideo_API.Services
             var dbVehiculo = _mapper.Map<Vehiculo>(vehiculo);
             dbVehiculo = await _vehiculoRepository.Insert(dbVehiculo);
             dbVehiculo = await _vehiculoRepository.GetById(dbVehiculo.IdVehiculo);
-            var createdVehiculo = _mapper.Map<VehiculoResponseDto>(dbVehiculo);
+            var createdVehiculo = _mapper.Map<VehiculoFullResponseDto>(dbVehiculo);
             return ApiResponse.Success("El vehículo ha sido agregado.", createdVehiculo);
         }
 
         public async Task<ApiResponse> Update(int id, VehiculoActualizarRequestDto vehiculo)
         {
-            bool existsPlaca = await _vehiculoRepository.ExistsByIdAndPlaca(id, vehiculo.Placa);
-            if(existsPlaca)
-                throw new ConflictException("La placa ingresada ya existe en otro vehículo.");
-
             bool existsTarifa = await _tarifaRepository.ExistsById(vehiculo.IdTarifa);
             if(!existsTarifa)
                 throw new BadRequestException("La tarifa que intento vincular al vehículo no existe.");
@@ -109,21 +109,23 @@ namespace ViteMontevideo_API.Services
                     throw new BadRequestException("El cliente que intento vincular al vehículo no existe.");
             }
 
-            var dbVehiculo = await _vehiculoRepository.GetById(id);
-            dbVehiculo.Placa = vehiculo.Placa.ToUpper();
+            var dbVehiculo = await _vehiculoRepository.GetById(id) 
+                ?? throw new NotFoundException("Vehículo no encontrado.");
+
             dbVehiculo.IdTarifa = vehiculo.IdTarifa;
             dbVehiculo.IdCliente = vehiculo.IdCliente;
 
             await _vehiculoRepository.Update(dbVehiculo);
             dbVehiculo = await _vehiculoRepository.GetById(id);
-            var updatedVehiculo = _mapper.Map<VehiculoResponseDto>(dbVehiculo);
+            var updatedVehiculo = _mapper.Map<VehiculoFullResponseDto>(dbVehiculo);
             return ApiResponse.Success("El vehículo ha sido actualizado.", updatedVehiculo);
 
         }
 
         public async Task<ApiResponse> DeleteById(int id)
         {
-            var dbVehiculo = await _vehiculoRepository.GetById(id);
+            var dbVehiculo = await _vehiculoRepository.GetById(id) 
+                ?? throw new NotFoundException("Vehículo no encontrado.");
 
             bool hasAbonados = await _vehiculoRepository.HasAbonadosById(id);
             bool hasServicios = await _vehiculoRepository.HasServiciosById(id);

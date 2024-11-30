@@ -3,7 +3,7 @@ using ViteMontevideo_API.Presentation.Dtos.Tarifas;
 
 namespace ViteMontevideo_API.Presentation.Dtos.Vehiculos
 {
-    public class VehiculoResponseDto
+    public class VehiculoFullResponseDto
     {
         public int IdVehiculo { get; set; }
         public string Placa { get; set; } = null!;

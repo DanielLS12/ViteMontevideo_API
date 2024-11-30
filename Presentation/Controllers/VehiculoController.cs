@@ -46,7 +46,7 @@ namespace ViteMontevideo_API.Presentation.Controllers
         public async Task<IActionResult> Insert(VehiculoCrearRequestDto request)
         {
             var response = await _service.Insert(request);
-            return CreatedAtAction(nameof(GetById), new { id = response.Data is VehiculoResponseDto vehiculo ? vehiculo.IdVehiculo : 0 }, response);
+            return CreatedAtAction(nameof(GetById), new { id = response.Data is VehiculoFullResponseDto vehiculo ? vehiculo.IdVehiculo : 0 }, response);
         }
 
         [HttpPut("{id}")]

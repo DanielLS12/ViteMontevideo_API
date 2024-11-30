@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
-using ViteMontevideo_API.Exceptions;
+using ViteMontevideo_API.Shared.Exceptions;
 using ViteMontevideo_API.Persistence.Models;
 using ViteMontevideo_API.Persistence.Repositories.Interfaces;
 using ViteMontevideo_API.Presentation.Dtos.ComerciosAdicionales;
@@ -80,7 +80,9 @@ namespace ViteMontevideo_API.Services
 
         public async Task<ComercioAdicionalResponseDto> GetById(int id)
         {
-            var comercioAdicional = await _comercioAdicionalRepository.GetById(id);
+            var comercioAdicional = await _comercioAdicionalRepository.GetById(id)
+                ?? throw new NotFoundException("Servicio adicional no encontrado.");
+
             return _mapper.Map<ComercioAdicionalResponseDto>(comercioAdicional);
         }
 
@@ -103,16 +105,11 @@ namespace ViteMontevideo_API.Services
             if (!existsCliente)
                 throw new BadRequestException("El cliente que intento vincular al servicio adicional no existe.");
 
-            var dbComercioAdicional = await _comercioAdicionalRepository.GetById(id);
+            var dbComercioAdicional = await _comercioAdicionalRepository.GetById(id) 
+                ?? throw new NotFoundException("Servicio adicional no encontrado.");
 
-            if(dbComercioAdicional.IdCaja != null)
-            {
-                bool hasClosedCajaChica = await _comercioAdicionalRepository.HasClosedCajaChicaById(id);
-                if (hasClosedCajaChica)
-                    throw new BadRequestException("La caja chica en donde el servicio adicional está cerrada. Por lo tanto, no se puede actualizar.");
-
+            if(dbComercioAdicional.IdCaja.HasValue)
                 throw new BadRequestException("El servicio adicional está pagado, por lo que no es posible actualizarlo.");
-            }
 
             dbComercioAdicional.IdCliente = comercioAdicional.IdCliente;
             dbComercioAdicional.TipoComercioAdicional = comercioAdicional.TipoComercioAdicional;
@@ -127,12 +124,13 @@ namespace ViteMontevideo_API.Services
 
         public async Task<ApiResponse> Pay(int id, ComercioAdicionalPagarRequestDto comercioAdicional)
         {
-            var dbComercioAidicional = await _comercioAdicionalRepository.GetById(id);
+            var dbComercioAidicional = await _comercioAdicionalRepository.GetById(id) 
+                ?? throw new NotFoundException("Servicio adicional no encontrado.");
 
-            if (dbComercioAidicional.IdCaja != null)
+            if (dbComercioAidicional.IdCaja.HasValue)
                 throw new BadRequestException("El servicio adicional ya está pagado.");
 
-            var cajaChicaAbierta = await _cajaChicaRepository.GetByEstadoTrue() ??
+            var cajaChicaAbierta = await _cajaChicaRepository.GetOpenCajaChica() ??
                 throw new BadRequestException("No es posible actualizar el estado de pago del servicio adicional porque no hay ninguna caja chica abierta actualmente.");
 
             var fechaHoraPago = comercioAdicional.FechaPago.Date + comercioAdicional.HoraPago;
@@ -154,14 +152,15 @@ namespace ViteMontevideo_API.Services
 
         public async Task<ApiResponse> CancelPayment(int id)
         {
-            var dbComercioAdicional = await _comercioAdicionalRepository.GetById(id);
+            var dbComercioAdicional = await _comercioAdicionalRepository.GetById(id)
+                ?? throw new NotFoundException("Servicio adicional no encontrado.");
 
-            if (dbComercioAdicional.IdCaja == null)
+            if (!dbComercioAdicional.IdCaja.HasValue)
                 throw new BadRequestException("El servicio adicional ya tiene el pago anulado.");
 
-            bool hasClosedCajaChica = await _comercioAdicionalRepository.HasClosedCajaChicaById(id);
-            if (hasClosedCajaChica)
-                throw new BadRequestException("La caja chica en donde el servicio adicional está cerrada. Por lo tanto, no se puede actualizar.");
+            bool isCajaChicaClosed = await _cajaChicaRepository.IsCajaChicaClosedById(dbComercioAdicional.IdCaja.Value);
+            if (isCajaChicaClosed)
+                throw new BadRequestException("La caja chica que contiene el servicio adicional está cerrada, por lo que no se puede anular el pago.");
 
             dbComercioAdicional.IdCaja = null;
             dbComercioAdicional.FechaPago = null;
@@ -176,16 +175,11 @@ namespace ViteMontevideo_API.Services
 
         public async Task<ApiResponse> DeleteById(int id)
         {
-            var dbComercioAdicional = await _comercioAdicionalRepository.GetById(id);
+            var dbComercioAdicional = await _comercioAdicionalRepository.GetById(id) 
+                ?? throw new NotFoundException("Servicio adicional no encontrado.");
 
-            if(dbComercioAdicional.IdCaja != null)
-            {
-                bool hasClosedCajaChica = await _comercioAdicionalRepository.HasClosedCajaChicaById(id);
-                if (hasClosedCajaChica)
-                    throw new BadRequestException("La caja chica en donde el servicio adicional está cerrada. Por lo tanto, no se puede actualizar.");
-
+            if(dbComercioAdicional.IdCaja.HasValue)
                 throw new BadRequestException("El servicio adicional está pagado, por lo que no es posible eliminarlo.");
-            }
 
             await _comercioAdicionalRepository.Delete(dbComercioAdicional);
             return ApiResponse.Success("El servicio adicional ha sido eliminado.");

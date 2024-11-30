@@ -4,8 +4,8 @@ namespace ViteMontevideo_API.Presentation.Dtos.ContratosAbonado
 {
     public class ContratoAbonadoCrearRequestDto
     {
-        [Required(ErrorMessage = "Elegir un vehículo es requerido.")]
-        public int IdVehiculo { get; set; }
+        [Required(ErrorMessage = "El campo placa vehicular es requerido.")]
+        public string PlacaVehicular { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "El campo fecha inicio es requerido.")]
         public DateTime FechaInicio { get; set; }

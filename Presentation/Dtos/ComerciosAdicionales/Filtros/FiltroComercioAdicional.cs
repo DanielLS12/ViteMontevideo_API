@@ -1,4 +1,4 @@
-﻿using ViteMontevideo_API.Persistence.Models;
+﻿using ViteMontevideo_API.Helpers.Enums;
 using ViteMontevideo_API.Presentation.Dtos.Cursor;
 
 namespace ViteMontevideo_API.Presentation.Dtos.ComerciosAdicionales.Filtros

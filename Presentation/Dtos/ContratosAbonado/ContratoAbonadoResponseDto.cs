@@ -16,6 +16,6 @@ namespace ViteMontevideo_API.Presentation.Dtos.ContratosAbonado
         public string? TipoPago { get; set; }
         public bool EstadoPago { get; set; }
         public string? Observacion { get; set; }
-        public virtual VehiculoSimplificadoDto Vehiculo { get; set; } = null!;
+        public virtual VehiculoSimplificadoResponseDto Vehiculo { get; set; } = null!;
     }
 }

@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using ViteMontevideo_API.Exceptions;
 using ViteMontevideo_API.Persistence.Context;
 using ViteMontevideo_API.Persistence.Models;
 using ViteMontevideo_API.Persistence.Repositories.Interfaces;
@@ -13,16 +12,12 @@ namespace ViteMontevideo_API.Persistence.Repositories
         {
         }
 
-        public override async Task<ContratoAbonado> GetById(int id) =>
+        public override async Task<ContratoAbonado?> GetById(int id) =>
             await _context.ContratosAbonados
                 .Include(ca => ca.Vehiculo)
-                .FirstOrDefaultAsync(ca => ca.IdContratoAbonado == id)
-            ?? throw new NotFoundException();
+                .FirstOrDefaultAsync(ca => ca.IdContratoAbonado == id);
 
-        public async Task<bool> HasAnyInProgressByIdVehiculo(int idVehiculo) =>
+        public async Task<bool> HasAnyAbonoInProgressByIdVehiculo(int idVehiculo) =>
             await _context.ContratosAbonados.AnyAsync(ca => ca.IdVehiculo == idVehiculo && !ca.EstadoPago);
-
-        public async Task<bool> HasClosedCajaChicaById(int id) =>
-            await _context.ContratosAbonados.AnyAsync(ca => ca.IdContratoAbonado == id && ca.CajaChica != null && !ca.CajaChica.Estado);
     }
 }

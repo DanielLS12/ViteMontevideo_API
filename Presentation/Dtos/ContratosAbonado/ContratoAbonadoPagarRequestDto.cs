@@ -1,5 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using ViteMontevideo_API.Persistence.Models;
+using ViteMontevideo_API.Helpers.Enums;
 
 namespace ViteMontevideo_API.Presentation.Dtos.ContratosAbonado
 {

@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using ViteMontevideo_API.Exceptions;
 using ViteMontevideo_API.Persistence.Context;
 using ViteMontevideo_API.Persistence.Models;
 using ViteMontevideo_API.Persistence.Repositories.Interfaces;
@@ -13,26 +12,16 @@ namespace ViteMontevideo_API.Persistence.Repositories
         {
         }
 
-        public async Task<bool> ExistsById(int id) =>
-            await _context.Vehiculos.AnyAsync(v => v.IdVehiculo == id);
-
-        public async Task<bool> ExistsByIdAndPlaca(int id, string placa) =>
-            await _context.Vehiculos.AnyAsync(v => v.Placa == placa.ToUpper() && v.IdVehiculo != id);
-
-        public async Task<bool> ExistsByPlaca(string placa) =>
-            await _context.Vehiculos.AnyAsync(v => v.Placa == placa.ToUpper());
-
-        public override async Task<Vehiculo> GetById(int id) =>
+        public override async Task<Vehiculo?> GetById(int id) =>
             await _context.Vehiculos
                 .Include(v => v.Tarifa)
                     .ThenInclude(t => t.Categoria)
                 .Include(v => v.Tarifa)
                     .ThenInclude(t => t.Actividad)
                 .Include(v => v.Cliente)
-                .FirstOrDefaultAsync(v => v.IdVehiculo == id) 
-            ?? throw new NotFoundException();
+                .FirstOrDefaultAsync(v => v.IdVehiculo == id);
 
-        public async Task<Vehiculo> GetByPlaca(string placa) =>
+        public async Task<Vehiculo?> GetByPlaca(string placa) =>
             await _context.Vehiculos
                 .Include(v => v.Tarifa)
                     .ThenInclude(t => t.Categoria)
@@ -40,8 +29,22 @@ namespace ViteMontevideo_API.Persistence.Repositories
                     .ThenInclude(t => t.Actividad)
                 .Include(v => v.Cliente)
                 .AsNoTracking()
-                .FirstOrDefaultAsync(v => v.Placa == placa.ToUpper())
-            ?? throw new NotFoundException();
+                .FirstOrDefaultAsync(v => v.Placa.Contains(placa));
+
+        public async Task<int?> GetIdVehiculoByPlaca(string placa) =>
+            await _context.Vehiculos
+                .Where(v => v.Placa.Contains(placa))
+                .Select(v => (int?)v.IdVehiculo)
+                .FirstOrDefaultAsync();
+
+        public async Task<bool> ExistsById(int id) =>
+            await _context.Vehiculos.AnyAsync(v => v.IdVehiculo == id);
+
+        public async Task<bool> ExistsByIdAndPlaca(int id, string placa) =>
+            await _context.Vehiculos.AnyAsync(v => v.Placa.Contains(placa) && v.IdVehiculo != id);
+
+        public async Task<bool> ExistsByPlaca(string placa) =>
+            await _context.Vehiculos.AnyAsync(v => v.Placa.Contains(placa));
 
         public async Task<bool> HasAbonadosById(int id) =>
             await _context.Vehiculos.AnyAsync(v => v.IdVehiculo == id && v.ContratosAbonados.Any());

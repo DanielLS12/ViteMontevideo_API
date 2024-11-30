@@ -4,9 +4,7 @@ namespace ViteMontevideo_API.Presentation.Dtos.Vehiculos
 {
     public class VehiculoCrearRequestDto
     {
-        [Required(ErrorMessage = "Elegir una tarifa es requerido.")]
         public short IdTarifa { get; set; }
-
         public int? IdCliente { get; set; }
 
         [Required(ErrorMessage = "La placa es requerida.")]
