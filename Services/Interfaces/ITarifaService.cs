@@ -1,5 +1,6 @@
-﻿using ViteMontevideo_API.Presentation.Dtos.Common;
-using ViteMontevideo_API.Presentation.Dtos.Tarifas;
+﻿using ViteMontevideo_API.Services.Dtos.Common;
+using ViteMontevideo_API.Services.Dtos.Tarifas.Requests;
+using ViteMontevideo_API.Services.Dtos.Tarifas.Responses;
 
 namespace ViteMontevideo_API.Services.Interfaces
 {

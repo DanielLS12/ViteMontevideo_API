@@ -1,8 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ViteMontevideo_API.ActionFilters;
-using ViteMontevideo_API.Presentation.Dtos.ContratosAbonado;
-using ViteMontevideo_API.Presentation.Dtos.ContratosAbonado.Filtros;
+using ViteMontevideo_API.Presentation.ActionFilters;
+using ViteMontevideo_API.Services.Dtos.ContratosAbonado.Parameters;
+using ViteMontevideo_API.Services.Dtos.ContratosAbonado.Requests;
+using ViteMontevideo_API.Services.Dtos.ContratosAbonado.Responses;
 using ViteMontevideo_API.Services.Interfaces;
 
 namespace ViteMontevideo_API.Presentation.Controllers

@@ -1,6 +1,7 @@
-﻿using ViteMontevideo_API.Presentation.Dtos.Common;
-using ViteMontevideo_API.Presentation.Dtos.Vehiculos;
-using ViteMontevideo_API.Presentation.Dtos.Vehiculos.Filtros;
+﻿using ViteMontevideo_API.Services.Dtos.Common;
+using ViteMontevideo_API.Services.Dtos.Vehiculos.Parameters;
+using ViteMontevideo_API.Services.Dtos.Vehiculos.Requests;
+using ViteMontevideo_API.Services.Dtos.Vehiculos.Responses;
 
 namespace ViteMontevideo_API.Services.Interfaces
 {

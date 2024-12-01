@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
-using ViteMontevideo_API.Configuration.Middleware;
 using ViteMontevideo_API.Configuration;
+using ViteMontevideo_API.Presentation.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 

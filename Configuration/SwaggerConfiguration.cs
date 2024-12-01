@@ -1,5 +1,5 @@
 ﻿using Microsoft.OpenApi.Models;
-using ViteMontevideo_API.ActionFilters;
+using ViteMontevideo_API.Presentation.ActionFilters;
 
 namespace ViteMontevideo_API.Configuration
 {

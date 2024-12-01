@@ -1,6 +1,7 @@
-﻿using ViteMontevideo_API.Presentation.Dtos.Common;
-using ViteMontevideo_API.Presentation.Dtos.ComerciosAdicionales;
-using ViteMontevideo_API.Presentation.Dtos.ComerciosAdicionales.Filtros;
+﻿using ViteMontevideo_API.Services.Dtos.ComerciosAdicionales.Parameters;
+using ViteMontevideo_API.Services.Dtos.ComerciosAdicionales.Requests;
+using ViteMontevideo_API.Services.Dtos.ComerciosAdicionales.Responses;
+using ViteMontevideo_API.Services.Dtos.Common;
 
 namespace ViteMontevideo_API.Services.Interfaces
 {

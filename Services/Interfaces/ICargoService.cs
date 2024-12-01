@@ -1,5 +1,5 @@
 ﻿using ViteMontevideo_API.Persistence.Models;
-using ViteMontevideo_API.Presentation.Dtos.Common;
+using ViteMontevideo_API.Services.Dtos.Common;
 
 namespace ViteMontevideo_API.Services.Interfaces
 {

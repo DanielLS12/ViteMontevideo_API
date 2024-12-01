@@ -1,5 +1,6 @@
-﻿using ViteMontevideo_API.Presentation.Dtos.Common;
-using ViteMontevideo_API.Presentation.Dtos.Trabajadores;
+﻿using ViteMontevideo_API.Services.Dtos.Common;
+using ViteMontevideo_API.Services.Dtos.Trabajadores.Requests;
+using ViteMontevideo_API.Services.Dtos.Trabajadores.Responses;
 
 namespace ViteMontevideo_API.Services.Interfaces
 {

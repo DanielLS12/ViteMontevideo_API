@@ -1,7 +1,7 @@
-﻿using ViteMontevideo_API.Presentation.Dtos.Clientes;
-using ViteMontevideo_API.Presentation.Dtos.Common;
-using ViteMontevideo_API.Presentation.Dtos.Egresos;
-using ViteMontevideo_API.Presentation.Dtos.Egresos.Filtros;
+﻿using ViteMontevideo_API.Services.Dtos.Common;
+using ViteMontevideo_API.Services.Dtos.Egresos.Parameters;
+using ViteMontevideo_API.Services.Dtos.Egresos.Requests;
+using ViteMontevideo_API.Services.Dtos.Egresos.Responses;
 
 namespace ViteMontevideo_API.Services.Interfaces
 {

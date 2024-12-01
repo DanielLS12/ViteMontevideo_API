@@ -1,6 +1,7 @@
-﻿using ViteMontevideo_API.Presentation.Dtos.Common;
-using ViteMontevideo_API.Presentation.Dtos.ContratosAbonado;
-using ViteMontevideo_API.Presentation.Dtos.ContratosAbonado.Filtros;
+﻿using ViteMontevideo_API.Services.Dtos.Common;
+using ViteMontevideo_API.Services.Dtos.ContratosAbonado.Parameters;
+using ViteMontevideo_API.Services.Dtos.ContratosAbonado.Requests;
+using ViteMontevideo_API.Services.Dtos.ContratosAbonado.Responses;
 
 namespace ViteMontevideo_API.Services.Interfaces
 {

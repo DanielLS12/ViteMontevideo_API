@@ -3,14 +3,15 @@ using AutoMapper.QueryableExtensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using ViteMontevideo_API.ActionFilters;
-using ViteMontevideo_API.Exceptions;
+using ViteMontevideo_API.Services.Exceptions;
 using ViteMontevideo_API.Persistence.Context;
 using ViteMontevideo_API.Persistence.Models;
-using ViteMontevideo_API.Presentation.Dtos.CajasChicas;
-using ViteMontevideo_API.Presentation.Dtos.CajasChicas.Filtros;
-using ViteMontevideo_API.Presentation.Dtos.Common;
-using ViteMontevideo_API.Presentation.Dtos.Cursor;
+using ViteMontevideo_API.Presentation.ActionFilters;
+using ViteMontevideo_API.Services.Dtos.Common;
+using ViteMontevideo_API.Services.Dtos.Cursor;
+using ViteMontevideo_API.Services.Dtos.CajasChicas.Parameters;
+using ViteMontevideo_API.Services.Dtos.CajasChicas.Requests;
+using ViteMontevideo_API.Services.Dtos.CajasChicas.Responses;
 
 namespace ViteMontevideo_API.Presentation.Controllers
 {
@@ -74,7 +75,7 @@ namespace ViteMontevideo_API.Presentation.Controllers
                 .AsNoTracking()
                 .OrderByDescending(caja => caja.IdCaja)
                 .ProjectTo<CajaChicaResponseDto>(_mapper.ConfigurationProvider)
-                .SingleOrDefault(c => c.IdCaja == id) ?? throw new NotFoundException("Caja Chica no encontrada.");
+                .SingleOrDefault(c => c.IdCaja == id);
 
             return Ok(cajaChica);
         }
@@ -127,7 +128,7 @@ namespace ViteMontevideo_API.Presentation.Controllers
         [ServiceFilter(typeof(ValidationFilterAttribute))]
         public IActionResult Guardar(CajaChicaCrearRequestDto cajaChicaDto)
         {
-            var trabajador = _dbContext.Trabajadores.Find(cajaChicaDto.IdTrabajador) ?? throw new NotFoundException("Trabajador no encontrado.");
+            var trabajador = _dbContext.Trabajadores.Find(cajaChicaDto.IdTrabajador);
 
             if (!trabajador.Estado)
                 throw new BadRequestException("Trabajador no activo.");
@@ -153,11 +154,11 @@ namespace ViteMontevideo_API.Presentation.Controllers
         [ServiceFilter(typeof(ValidationFilterAttribute))]
         public IActionResult Editar([FromRoute] int id, [FromBody] CajaChicaActualizarRequestDto cajaChicaDto)
         {
-            var dbCajaChica = _dbContext.CajasChicas.Find(id) ?? throw new NotFoundException("Caja chica no encontrada.");
+            var dbCajaChica = _dbContext.CajasChicas.Find(id);
 
             if (cajaChicaDto.IdTrabajador != null)
             {
-                var trabajador = _dbContext.Trabajadores.Find(cajaChicaDto.IdTrabajador) ?? throw new NotFoundException("Trabajador no encontrado.");
+                var trabajador = _dbContext.Trabajadores.Find(cajaChicaDto.IdTrabajador);
 
                 if (!trabajador.Estado)
                     throw new BadRequestException("Trabajador no activo.");
@@ -178,7 +179,7 @@ namespace ViteMontevideo_API.Presentation.Controllers
         [HttpPatch("{id}/abrir")]
         public IActionResult Abrir(int id)
         {
-            var dbCajaChica = _dbContext.CajasChicas.Find(id) ?? throw new NotFoundException("Caja chica no encontrada.");
+            var dbCajaChica = _dbContext.CajasChicas.Find(id);
 
             if (dbCajaChica.Estado)
                 throw new BadRequestException("Esta caja chica ya estaba abierta.");
@@ -203,7 +204,7 @@ namespace ViteMontevideo_API.Presentation.Controllers
         [ServiceFilter(typeof(ValidationFilterAttribute))]
         public IActionResult Cerrar([FromRoute] int id, [FromBody] CajaChicaCerrarRequestDto cajaChicaDto)
         {
-            var dbCajaChica = _dbContext.CajasChicas.Find(id) ?? throw new NotFoundException("Caja chica no encontrada.");
+            var dbCajaChica = _dbContext.CajasChicas.Find(id);
 
             if (!dbCajaChica.Estado)
                 throw new BadRequestException("Esta caja chica ya se encontraba cerrada.");
@@ -223,7 +224,7 @@ namespace ViteMontevideo_API.Presentation.Controllers
         [HttpDelete("{id}")]
         public IActionResult Eliminar(int id)
         {
-            var cajaChica = _dbContext.CajasChicas.Find(id) ?? throw new NotFoundException("Caja chica no encontrada.");
+            var cajaChica = _dbContext.CajasChicas.Find(id);
 
             var tieneContratosAbonados = _dbContext.ContratosAbonados.Any(ca => ca.IdCaja == id);
 

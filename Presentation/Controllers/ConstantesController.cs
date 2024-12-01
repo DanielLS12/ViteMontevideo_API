@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ViteMontevideo_API.Persistence.Models;
+using ViteMontevideo_API.Services.Enums;
 
 namespace ViteMontevideo_API.Presentation.Controllers
 {

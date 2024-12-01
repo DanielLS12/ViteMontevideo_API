@@ -2,14 +2,14 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using ViteMontevideo_API.ActionFilters;
-using ViteMontevideo_API.Configuration.Middleware;
 using ViteMontevideo_API.Persistence.Context;
 using ViteMontevideo_API.Services.Interfaces;
-using ViteMontevideo_API.Services;
 using Microsoft.AspNetCore.Mvc;
 using ViteMontevideo_API.Persistence.Repositories.Interfaces;
-using ViteMontevideo_API.Persistence.Repositories;
+using ViteMontevideo_API.Presentation.ActionFilters;
+using ViteMontevideo_API.Presentation.Middleware;
+using ViteMontevideo_API.Services.Implementation;
+using ViteMontevideo_API.Persistence.Repositories.Implementation;
 
 namespace ViteMontevideo_API.Configuration
 {

@@ -1,6 +1,7 @@
-﻿using ViteMontevideo_API.Presentation.Dtos.Common;
-using ViteMontevideo_API.Presentation.Dtos.Servicios;
-using ViteMontevideo_API.Presentation.Dtos.Servicios.Filtros;
+﻿using ViteMontevideo_API.Services.Dtos.Common;
+using ViteMontevideo_API.Services.Dtos.Servicios.Parameters;
+using ViteMontevideo_API.Services.Dtos.Servicios.Requests;
+using ViteMontevideo_API.Services.Dtos.Servicios.Responses;
 
 namespace ViteMontevideo_API.Services.Interfaces
 {

@@ -1,15 +1,24 @@
 ﻿using AutoMapper;
 using ViteMontevideo_API.Persistence.Models;
-using ViteMontevideo_API.Presentation.Dtos.CajasChicas;
-using ViteMontevideo_API.Presentation.Dtos.Clientes;
-using ViteMontevideo_API.Presentation.Dtos.ComerciosAdicionales;
-using ViteMontevideo_API.Presentation.Dtos.ContratosAbonado;
-using ViteMontevideo_API.Presentation.Dtos.Egresos;
-using ViteMontevideo_API.Presentation.Dtos.Servicios;
-using ViteMontevideo_API.Presentation.Dtos.Tarifas;
-using ViteMontevideo_API.Presentation.Dtos.Trabajadores;
-using ViteMontevideo_API.Presentation.Dtos.Usuarios;
-using ViteMontevideo_API.Presentation.Dtos.Vehiculos;
+using ViteMontevideo_API.Services.Dtos.CajasChicas.Requests;
+using ViteMontevideo_API.Services.Dtos.CajasChicas.Responses;
+using ViteMontevideo_API.Services.Dtos.Clientes.Requests;
+using ViteMontevideo_API.Services.Dtos.Clientes.Responses;
+using ViteMontevideo_API.Services.Dtos.ComerciosAdicionales.Requests;
+using ViteMontevideo_API.Services.Dtos.ComerciosAdicionales.Responses;
+using ViteMontevideo_API.Services.Dtos.ContratosAbonado.Requests;
+using ViteMontevideo_API.Services.Dtos.ContratosAbonado.Responses;
+using ViteMontevideo_API.Services.Dtos.Egresos.Requests;
+using ViteMontevideo_API.Services.Dtos.Egresos.Responses;
+using ViteMontevideo_API.Services.Dtos.Servicios.Requests;
+using ViteMontevideo_API.Services.Dtos.Servicios.Responses;
+using ViteMontevideo_API.Services.Dtos.Tarifas.Requests;
+using ViteMontevideo_API.Services.Dtos.Tarifas.Responses;
+using ViteMontevideo_API.Services.Dtos.Trabajadores.Requests;
+using ViteMontevideo_API.Services.Dtos.Trabajadores.Responses;
+using ViteMontevideo_API.Services.Dtos.Usuarios;
+using ViteMontevideo_API.Services.Dtos.Vehiculos.Requests;
+using ViteMontevideo_API.Services.Dtos.Vehiculos.Responses;
 
 namespace ViteMontevideo_API.Services.Mapper
 {

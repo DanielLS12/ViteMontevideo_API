@@ -5,10 +5,10 @@ using System.Text;
 using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
-using ViteMontevideo_API.ActionFilters;
-using ViteMontevideo_API.Exceptions;
+using ViteMontevideo_API.Services.Exceptions;
 using ViteMontevideo_API.Persistence.Context;
-using ViteMontevideo_API.Presentation.Dtos.Usuarios;
+using ViteMontevideo_API.Presentation.ActionFilters;
+using ViteMontevideo_API.Services.Dtos.Usuarios;
 
 namespace ViteMontevideo_API.Presentation.Controllers
 {

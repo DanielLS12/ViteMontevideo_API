@@ -1,8 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ViteMontevideo_API.ActionFilters;
-using ViteMontevideo_API.Presentation.Dtos.Clientes;
-using ViteMontevideo_API.Presentation.Dtos.Clientes.Filtros;
+using ViteMontevideo_API.Presentation.ActionFilters;
+using ViteMontevideo_API.Services.Dtos.Clientes.Parameters;
+using ViteMontevideo_API.Services.Dtos.Clientes.Requests;
+using ViteMontevideo_API.Services.Dtos.Clientes.Responses;
 using ViteMontevideo_API.Services.Interfaces;
 
 namespace ViteMontevideo_API.Presentation.Controllers
