@@ -33,6 +33,9 @@ namespace ViteMontevideo_API.Persistence.Repositories.Implementation
             return await query.AnyAsync();
         }
 
+        public async Task<bool> ExistsById(short id) =>
+            await _context.Trabajadores.AnyAsync(t => t.IdTrabajador == id);
+
         public override async Task<IEnumerable<Trabajador>> GetAll() =>
             await _context.Trabajadores
                 .Include(t => t.Cargo)

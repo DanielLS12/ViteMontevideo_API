@@ -17,8 +17,8 @@ namespace ViteMontevideo_API.Configuration
     {
         public static void AddCustomServices(this IServiceCollection services, IConfiguration configuration)
         {
-            var secretKey = configuration.GetSection("JwtSettings").GetSection("SecretKey").ToString();
-            var bytesKey = Encoding.UTF8.GetBytes(secretKey);
+            var secretKey = configuration.GetSection("JwtSettings").GetSection("SecretKey").Value;
+            var bytesKey = Encoding.UTF8.GetBytes(secretKey!);
 
             services.AddAuthentication(config =>
             {
@@ -75,6 +75,7 @@ namespace ViteMontevideo_API.Configuration
             services.AddScoped<IContratoAbonadoService, ContratoAbonadoService>();
             services.AddScoped<IComercioAdicionalService, ComercioAdicionalService>();
             services.AddScoped<IServicioService, ServicioService>();
+            services.AddScoped<ICajaChicaService, CajaChicaService>();
 
             services.AddTransient<ErrorHandlerMiddleware>();
             services.AddScoped<ValidationFilterAttribute>();

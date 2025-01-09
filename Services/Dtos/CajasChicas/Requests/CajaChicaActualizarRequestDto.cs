@@ -5,13 +5,14 @@ namespace ViteMontevideo_API.Services.Dtos.CajasChicas.Requests
 {
     public class CajaChicaActualizarRequestDto
     {
-        public short? IdTrabajador { get; set; }
+        public short IdTrabajador { get; set; }
 
+        [Required(ErrorMessage = "El campo turno es requerido.")]
         [EnumDataType(typeof(Turno), ErrorMessage = "El turno ingresado no es válido.")]
-        public string? Turno { get; set; } = null!;
+        public string Turno { get; set; } = null!;
 
         [Range(0.0, double.MaxValue, ErrorMessage = "El saldo inicial no puede ser un número negativo.")]
-        public decimal? SaldoInicial { get; set; }
+        public decimal SaldoInicial { get; set; }
 
         public string? Observacion { get; set; }
     }

@@ -90,6 +90,22 @@ public partial class EstacionamientoContext : DbContext
                 .HasColumnType("smallmoney")
                 .HasColumnName("saldo_inicial");
 
+            entity.Property(e => e.TotalMontoServicios)
+                .HasColumnType("money")
+                .HasColumnName("total_monto_servicios");
+
+            entity.Property(e => e.TotalMontoAbonados)
+                .HasColumnType("money")
+                .HasColumnName("total_monto_abonados");
+
+            entity.Property(e => e.TotalMontoComerciosAdicionales)
+                .HasColumnType("money")
+                .HasColumnName("total_monto_comercios_adicionales");
+
+            entity.Property(e => e.TotalMontoEgresos)
+                .HasColumnType("money")
+                .HasColumnName("total_monto_egresos");
+
             entity.HasOne(d => d.Trabajador).WithMany(e => e.CajasChicas)
                 .HasForeignKey(e => e.IdTrabajador)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -196,7 +212,7 @@ public partial class EstacionamientoContext : DbContext
             entity.Property(e => e.EstadoPago)
                 .HasDefaultValueSql("((0))")
                 .HasColumnName("estado_pago")
-                .IsRequired(true);
+                .IsRequired();
             entity.Property(e => e.FechaFinal)
                 .HasColumnType("date")
                 .HasColumnName("fecha_final");
@@ -269,6 +285,7 @@ public partial class EstacionamientoContext : DbContext
                 .HasColumnType("money")
                 .HasColumnName("descuento");
             entity.Property(e => e.EstadoPago)
+                .IsRequired()
                 .HasDefaultValueSql("((0))")
                 .HasColumnName("estado_pago");
             entity.Property(e => e.FechaEntrada)

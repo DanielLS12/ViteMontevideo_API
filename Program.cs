@@ -13,8 +13,6 @@ builder.Services.AddControllers()
             opt.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
         });
 
-builder.Configuration.AddJsonFile("appsettings.json");
-
 builder.Services.AddCustomServices(builder.Configuration);
 builder.Services.AddSwaggerServices();
 

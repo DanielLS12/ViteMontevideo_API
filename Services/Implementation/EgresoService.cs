@@ -25,6 +25,14 @@ namespace ViteMontevideo_API.Services.Implementation
             _mapper = mapper;
         }
 
+        public async Task<DataResponse<EgresoResponseDto>> GetAll(int idCajaChica)
+        {
+            var egresos = await _egresoRepository.GetAll(idCajaChica);
+            int cantidad = egresos.Count();
+            var data = _mapper.Map<List<EgresoResponseDto>>(egresos);
+            return new DataResponse<EgresoResponseDto>(cantidad, data);
+        }
+
         public async Task<PageCursorMontoResponse<EgresoResponseDto>> GetAllPageCursor(FiltroEgreso filtro)
         {
             var query = _egresoRepository.Query();
@@ -100,7 +108,7 @@ namespace ViteMontevideo_API.Services.Implementation
                 throw new BadRequestException("La caja chica que contiene el egreso está cerrada, por lo que no se puede eliminar.");
 
             await _egresoRepository.Delete(dbEgreso);
-            return ApiResponse.Success("La caja chica ha sido eliminada.");
+            return ApiResponse.Success("El egreso ha sido eliminado.");
         }
     }
 }

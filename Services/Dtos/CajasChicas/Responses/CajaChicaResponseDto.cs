@@ -11,6 +11,10 @@ namespace ViteMontevideo_API.Services.Dtos.CajasChicas.Responses
         public TimeSpan HoraInicio { get; set; }
         public TimeSpan? HoraFinal { get; set; }
         public decimal SaldoInicial { get; set; }
+        public decimal TotalMontoServicios { get; set; }
+        public decimal TotalMontoAbonados { get; set; }
+        public decimal TotalMontoComerciosAdicionales { get; set; }
+        public decimal TotalMontoEgresos { get; set; }
         public string? Observacion { get; set; }
         public bool Estado { get; set; }
         public virtual TrabajadorResponseDto Trabajador { get; set; } = null!;

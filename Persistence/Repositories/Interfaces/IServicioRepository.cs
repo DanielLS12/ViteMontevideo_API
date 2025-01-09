@@ -4,6 +4,7 @@ namespace ViteMontevideo_API.Persistence.Repositories.Interfaces
 {
     public interface IServicioRepository : IBaseRepository<int, Servicio>
     {
+        Task<IEnumerable<Servicio>> GetAll(int idCajaChica);
         Task<Servicio?> GetServicioEntrada(int idServicio);
         Task<Servicio?> GetServicioEntrada(string placa);
         Task<Servicio?> GetServicioSalida(int idServicio);

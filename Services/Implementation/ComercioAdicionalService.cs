@@ -31,6 +31,14 @@ namespace ViteMontevideo_API.Services.Implementation
             _mapper = mapper;
         }
 
+        public async Task<DataResponse<ComercioAdicionalResponseDto>> GetAll(int idCajaChica)
+        {
+            var comerciosAdicionales = await _comercioAdicionalRepository.GetAll(idCajaChica);
+            int cantidad = comerciosAdicionales.Count();
+            var data = _mapper.Map<List<ComercioAdicionalResponseDto>>(comerciosAdicionales);
+            return new DataResponse<ComercioAdicionalResponseDto>(cantidad, data);
+        }
+
         public async Task<PageCursorMontoResponse<ComercioAdicionalResponseDto>> GetAllPageCursor(FiltroComercioAdicional filtro)
         {
             var query = _comercioAdicionalRepository.Query();

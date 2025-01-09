@@ -7,6 +7,7 @@ namespace ViteMontevideo_API.Services.Interfaces
 {
     public interface IServicioService
     {
+        Task<DataResponse<ServicioSalidaResponseDto>> GetAll(int idCajaChica);
         Task<DataResponse<ServicioEntradaResponseDto>> GetAllServiciosEntrada();
         Task<DataMontoResponse<ServicioSalidaResponseDto>> GetAllServiciosSalida(FiltroServicioSalida filtro);
         Task<ServicioEntradaResponseDto> GetServicioEntradaByPlaca(string placa);

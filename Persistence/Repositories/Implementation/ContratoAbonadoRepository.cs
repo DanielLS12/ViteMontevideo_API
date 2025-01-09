@@ -11,6 +11,14 @@ namespace ViteMontevideo_API.Persistence.Repositories.Implementation
         {
         }
 
+        public async Task<IEnumerable<ContratoAbonado>> GetAll(int idCajaChica) =>
+            await _context.ContratosAbonados
+                .AsNoTracking()
+                .Include(ca => ca.Vehiculo)
+                .Where(ca => ca.IdCaja == idCajaChica)
+                .OrderByDescending(ca => ca.IdContratoAbonado)
+                .ToListAsync();
+
         public override async Task<ContratoAbonado?> GetById(int id) =>
             await _context.ContratosAbonados
                 .Include(ca => ca.Vehiculo)

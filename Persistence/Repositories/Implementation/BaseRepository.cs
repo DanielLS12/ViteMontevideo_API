@@ -42,8 +42,10 @@ namespace ViteMontevideo_API.Persistence.Repositories.Implementation
         {
             var entity = await _context.FindAsync<TEntity>(id);
 
+            var entityType = typeof(TEntity).Name;
+
             if (entity == null)
-                _logger.LogWarning("No se encontro el recurso con ID: '{@id}'. {@method} - {Time}", id, nameof(GetById), DateTime.UtcNow);
+                _logger.LogWarning("No se encontro el recurso con ID: '{@id}'. {@method} - {Time} | Tipo '{entityType}'", id, nameof(GetById), DateTime.UtcNow,entityType);
 
             return entity;
         }

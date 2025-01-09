@@ -7,6 +7,7 @@ namespace ViteMontevideo_API.Services.Interfaces
 {
     public interface IComercioAdicionalService
     {
+        Task<DataResponse<ComercioAdicionalResponseDto>> GetAll(int idCajaChica);
         Task<PageCursorMontoResponse<ComercioAdicionalResponseDto>> GetAllPageCursor(FiltroComercioAdicional filtro);
         Task<ComercioAdicionalResponseDto> GetById(int id);
         Task<ApiResponse> Insert(ComercioAdicionalCrearRequestDto comercioAdicional);

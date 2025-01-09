@@ -36,6 +36,15 @@ namespace ViteMontevideo_API.Services.Implementation
             _mapper = mapper;
         }
 
+
+        public async Task<DataResponse<ServicioSalidaResponseDto>> GetAll(int idCajaChica)
+        {
+            var servicios = await _servicioRepository.GetAll(idCajaChica);
+            int cantidad = servicios.Count();
+            var data = _mapper.Map<List<ServicioSalidaResponseDto>>(servicios);
+            return new DataResponse<ServicioSalidaResponseDto>(cantidad, data);
+        }
+
         public async Task<DataResponse<ServicioEntradaResponseDto>> GetAllServiciosEntrada()
         {
             var query = _servicioRepository.Query();
@@ -107,6 +116,9 @@ namespace ViteMontevideo_API.Services.Implementation
             DateTime fechaHoraEntrada = dbServicio.FechaEntrada.Date + dbServicio.HoraEntrada;
             DateTime fechaHoraSalida = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, zonaHorariaPeru);
 
+            Console.WriteLine("Fecha y hora entrada: " + fechaHoraEntrada.ToString());
+            Console.WriteLine("Fecha y hora SALIDA: " + fechaHoraSalida.ToString());
+
             TimeSpan tolerancia = dbServicio.Vehiculo.Tarifa.Tolerancia;
             TimeSpan estadia = fechaHoraSalida - fechaHoraEntrada;
 
@@ -130,6 +142,7 @@ namespace ViteMontevideo_API.Services.Implementation
                 TimeSpan horaNoche = dbServicio.Vehiculo.Tarifa.HoraNoche!.Value;
 
                 bool entradaDiurna = fechaHoraEntrada.TimeOfDay >= horaDia && fechaHoraEntrada.TimeOfDay < horaNoche;
+                Console.WriteLine(entradaDiurna ? "Es entrada diurna" : "No es entrada diurna");
 
                 montoPagar += CalculateAmount(new CobroParameter(fechaHoraEntrada, fechaHoraSalida, estadia, horaDia, horaNoche, precioDia, precioNoche, tolerancia), entradaDiurna);
             }
@@ -144,15 +157,24 @@ namespace ViteMontevideo_API.Services.Implementation
 
             bool salidaDiurna = cp.FechaSalida.TimeOfDay >= cp.HoraDia && cp.FechaSalida.TimeOfDay < cp.HoraNoche;
 
+            Console.WriteLine(salidaDiurna ? "Es salida diurna" : "No es salida diurna");
+
             if (dias == 0)
             {
                 // Entrada y salida el mismo día
-                TimeSpan diferenciaInicio = entradaDiurna ? cp.HoraNoche - cp.FechaEntrada.TimeOfDay : cp.HoraDia - cp.FechaEntrada.TimeOfDay;
-                if (diferenciaInicio > cp.Tolerancia) monto += entradaDiurna ? cp.PrecioDia : cp.PrecioNoche;
+                TimeSpan diferenciaInicio = entradaDiurna ? cp.HoraNoche - cp.FechaEntrada.TimeOfDay : cp.FechaEntrada.TimeOfDay - cp.HoraDia;
+                Console.WriteLine($"Esta en 0 días, la diferencia de inicio es {diferenciaInicio} y la tolerancia de {cp.Tolerancia}");
+                if (diferenciaInicio > cp.Tolerancia) 
+                    monto += entradaDiurna ? cp.PrecioDia : cp.PrecioNoche;
+
+                // Se aplica solo en el caso de que ha entrado en el día
+                if (entradaDiurna && salidaDiurna && cp.FechaEntrada.Date != cp.FechaSalida.Date)
+                    monto += cp.PrecioNoche;
 
                 if (salidaDiurna)
                 {
                     TimeSpan diferenciaSalida = cp.FechaSalida.TimeOfDay - cp.HoraDia;
+                    Console.WriteLine("Diferencia salida: " + diferenciaSalida);
                     if (diferenciaSalida > cp.Tolerancia) monto += cp.PrecioDia;
                 }
                 else
@@ -262,11 +284,16 @@ namespace ViteMontevideo_API.Services.Implementation
             var dbServicio = await _servicioRepository.GetServicioEntrada(placa)
                 ?? throw new NotFoundException($"El vehículo con placa {placa.ToUpper()} no se encuentra en el estacionamiento.");
 
+            var fechaHoraEntrada = dbServicio.FechaEntrada.Date + dbServicio.HoraEntrada;
+            var fechaHoraSalida = servicio.FechaSalida.Date + servicio.HoraSalida;
+
+            if(fechaHoraEntrada > fechaHoraSalida)
+                throw new BadRequestException($"La fecha y hora de salida ({fechaHoraSalida:yyyy-MM-dd HH:mm:ss}) no puede ser anterior a la fecha y hora de entrada ({fechaHoraEntrada:yyyy-MM-dd HH:mm:ss}).");
+
             var cajaChicaAbierta = await _cajaChicaRepository.GetOpenCajaChica()
                 ?? throw new BadRequestException("No es posible actualizar el estado de pago del servicio porque no hay ninguna caja chica abierta actualmente.");
 
             var fechaHoraInicio = cajaChicaAbierta.FechaInicio.Date + cajaChicaAbierta.HoraInicio;
-            var fechaHoraSalida = servicio.FechaSalida.Date + servicio.HoraSalida;
 
             if (fechaHoraInicio > fechaHoraSalida)
                 throw new BadRequestException($"La fecha y hora de salida del servicio ({fechaHoraSalida:yyyy-MM-dd HH:mm:ss}) no puede ser anterior a la fecha y hora de inicio de la caja chica abierta ({fechaHoraInicio:yyyy-MM-dd HH:mm:ss}).");

@@ -7,6 +7,7 @@ namespace ViteMontevideo_API.Services.Interfaces
 {
     public interface IContratoAbonadoService
     {
+        Task<DataResponse<ContratoAbonadoResponseDto>> GetAll(int idCajaChica);
         Task<PageCursorMontoResponse<ContratoAbonadoResponseDto>> GetAllPageCursor(FiltroContratoAbonado filtro);
         Task<ContratoAbonadoResponseDto> GetById(int id);
         Task<ApiResponse> Insert(ContratoAbonadoCrearRequestDto abonado);

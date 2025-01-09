@@ -34,6 +34,14 @@ namespace ViteMontevideo_API.Services.Implementation
             _mapper = mapper;
         }
 
+        public async Task<DataResponse<ContratoAbonadoResponseDto>> GetAll(int idCajaChica)
+        {
+            var abonos = await _contratoAbonadoRepository.GetAll(idCajaChica);
+            var cantidad = abonos.Count();
+            var data = _mapper.Map<List<ContratoAbonadoResponseDto>>(abonos);
+            return new DataResponse<ContratoAbonadoResponseDto>(cantidad, data);
+        }
+
         public async Task<PageCursorMontoResponse<ContratoAbonadoResponseDto>> GetAllPageCursor(FiltroContratoAbonado filtro)
         {
             var query = _contratoAbonadoRepository.Query();

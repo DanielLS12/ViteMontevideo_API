@@ -10,6 +10,6 @@ namespace ViteMontevideo_API.Persistence.Repositories.Interfaces
         Task<TEntity?> GetById(TId id);
         Task<TEntity> Insert(TEntity entity);
         Task<TEntity> Update(TEntity entity);
-        Task Delete(TEntity id);
+        Task Delete(TEntity entity);
     }
 }

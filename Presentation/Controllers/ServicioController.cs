@@ -13,45 +13,52 @@ namespace ViteMontevideo_API.Presentation.Controllers
     [ApiController]
     public class ServicioController : ControllerBase
     {
-        private readonly IServicioService _servicioService;
+        private readonly IServicioService _service;
 
-        public ServicioController(IServicioService servicioService)
+        public ServicioController(IServicioService service)
         {
-            _servicioService = servicioService;
+            _service = service;
+        }
+
+        [HttpGet("{idCajaChica}")]
+        public async Task<IActionResult> GetAll(int idCajaChica)
+        {
+            var response = await _service.GetAll(idCajaChica);
+            return Ok(response);
         }
 
         [HttpGet("entradas-vehiculares")]
         public async Task<IActionResult> GetAllEntradasVehiculares()
         {
-            var response = await _servicioService.GetAllServiciosEntrada();
+            var response = await _service.GetAllServiciosEntrada();
             return Ok(response);
         }
 
         [HttpGet("salidas-vehiculares")]
         public async Task<IActionResult> GetAllSalidasVehiculares([FromQuery] FiltroServicioSalida filtro)
         {
-            var response = await _servicioService.GetAllServiciosSalida(filtro);
+            var response = await _service.GetAllServiciosSalida(filtro);
             return Ok(response);
         }
 
         [HttpGet("{placa}/entrada-vehicular")]
         public async Task<IActionResult> GetServicioEntradaByPlaca(string placa)
         {
-            var response = await _servicioService.GetServicioEntradaByPlaca(placa);
+            var response = await _service.GetServicioEntradaByPlaca(placa);
             return Ok(response);
         }
 
         [HttpGet("{id}/salida-vehicular")]
         public async Task<IActionResult> GetServicioSalidaById(int id)
         {
-            var response = await _servicioService.GetServicioSalidaById(id);
+            var response = await _service.GetServicioSalidaById(id);
             return Ok(response);
         }
 
         [HttpGet("{placa}/generar-monto")]
         public async Task<IActionResult> GetServicioAmount(string placa)
         {
-            var response = await _servicioService.GetServicioAmount(placa);
+            var response = await _service.GetServicioAmount(placa);
             return Ok(response);
         }
 
@@ -59,7 +66,7 @@ namespace ViteMontevideo_API.Presentation.Controllers
         [ServiceFilter(typeof(ValidationFilterAttribute))]
         public async Task<IActionResult> Insert(ServicioCrearRequestDto request)
         {
-            var response = await _servicioService.Insert(request);
+            var response = await _service.Insert(request);
             return CreatedAtAction(nameof(GetServicioEntradaByPlaca), new { placa = response.Data is ServicioEntradaResponseDto servicio ? servicio.Vehiculo.Placa : "" }, response);
         }
 
@@ -67,7 +74,7 @@ namespace ViteMontevideo_API.Presentation.Controllers
         [ServiceFilter(typeof(ValidationFilterAttribute))]
         public async Task<IActionResult> Update(int id, [FromBody] ServicioActualizarRequestDto request)
         {
-            var response = await _servicioService.Update(id, request);
+            var response = await _service.Update(id, request);
             return Ok(response);
         }
 
@@ -75,21 +82,21 @@ namespace ViteMontevideo_API.Presentation.Controllers
         [ServiceFilter(typeof(ValidationFilterAttribute))]
         public async Task<IActionResult> Pay(string placa, [FromBody] ServicioPagarRequestDto request)
         {
-            var response = await _servicioService.Pay(placa.ToUpper(), request);
+            var response = await _service.Pay(placa.ToUpper(), request);
             return Ok(response);
         }
 
         [HttpPatch("{id}/anular-pago")]
         public async Task<IActionResult> CancelPayment(int id)
         {
-            var response = await _servicioService.CancelPayment(id);
+            var response = await _service.CancelPayment(id);
             return Ok(response);
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteById(int id)
         {
-            var response = await _servicioService.DeleteById(id);
+            var response = await _service.DeleteById(id);
             return Ok(response);
         }
     }

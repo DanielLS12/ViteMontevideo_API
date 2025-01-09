@@ -4,6 +4,7 @@ using ViteMontevideo_API.Presentation.ActionFilters;
 using ViteMontevideo_API.Services.Dtos.Egresos.Parameters;
 using ViteMontevideo_API.Services.Dtos.Egresos.Requests;
 using ViteMontevideo_API.Services.Dtos.Egresos.Responses;
+using ViteMontevideo_API.Services.Implementation;
 using ViteMontevideo_API.Services.Interfaces;
 
 namespace ViteMontevideo_API.Presentation.Controllers
@@ -18,6 +19,13 @@ namespace ViteMontevideo_API.Presentation.Controllers
         public EgresoController(IEgresoService service)
         {
             _service = service;
+        }
+
+        [HttpGet("{idCajaChica}")]
+        public async Task<IActionResult> GetAll(int idCajaChica)
+        {
+            var response = await _service.GetAll(idCajaChica);
+            return Ok(response);
         }
 
         [HttpGet]

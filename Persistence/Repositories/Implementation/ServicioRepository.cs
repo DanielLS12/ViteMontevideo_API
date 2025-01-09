@@ -11,6 +11,18 @@ namespace ViteMontevideo_API.Persistence.Repositories.Implementation
         {
         }
 
+        public async Task<IEnumerable<Servicio>> GetAll(int idCajaChica) =>
+            await _context.Servicios
+                .AsNoTracking()
+                .Include(s => s.Vehiculo)
+                .Include(s => s.Tarifa!)
+                    .ThenInclude(t => t.Categoria)
+                .Include(s => s.Tarifa!)
+                    .ThenInclude(t => t.Actividad)
+                .Where(s => s.IdCaja == idCajaChica)
+                .OrderByDescending(s => s.IdServicio)
+                .ToListAsync();
+
         public async Task<Servicio?> GetServicioSalida(int idServicio) =>
             await _context.Servicios
                 .Include(s => s.Vehiculo)

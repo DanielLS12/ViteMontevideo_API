@@ -7,6 +7,7 @@ namespace ViteMontevideo_API.Services.Interfaces
 {
     public interface IEgresoService
     {
+        Task<DataResponse<EgresoResponseDto>> GetAll(int idCajaChica);
         Task<PageCursorMontoResponse<EgresoResponseDto>> GetAllPageCursor(FiltroEgreso filtro);
         Task<EgresoResponseDto> GetById(int id);
         Task<ApiResponse> Insert(EgresoCrearRequestDto egreso);
