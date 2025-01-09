@@ -201,6 +201,12 @@ public partial class EstacionamientoContext : DbContext
                 .HasConstraintName("Fk_ComerciosAdicionales_CajasChicas");
         });
 
+        modelBuilder.Entity<ComercioAdicional>()
+            .ToTable("Comercios_Adicionales", ca => ca.HasTrigger("after_update_recalcular_comercios_adicionales"));
+
+        modelBuilder.Entity<ComercioAdicional>()
+            .ToTable("Comercios_Adicionales", ca => ca.HasTrigger("after_delete_recalcular_comercios_adicionales"));
+
         modelBuilder.Entity<ContratoAbonado>(entity =>
         {
             entity.HasKey(e => e.IdContratoAbonado).HasName("PK__Contrato__6E37623D12EBB370");
@@ -251,6 +257,12 @@ public partial class EstacionamientoContext : DbContext
                 .HasConstraintName("Fk_Contratos_Abonados_Cajas_Chicas");
         });
 
+        modelBuilder.Entity<ContratoAbonado>()
+            .ToTable("Contratos_Abonados", ca => ca.HasTrigger("after_update_recalcular_abonados"));
+
+        modelBuilder.Entity<ContratoAbonado>()
+            .ToTable("Contratos_Abonados", ca => ca.HasTrigger("after_delete_recalcular_abonados"));
+
         modelBuilder.Entity<Egreso>(entity =>
         {
             entity.HasKey(e => e.IdEgreso).HasName("PK__Egresos__6B30851B5799EDD1");
@@ -275,6 +287,15 @@ public partial class EstacionamientoContext : DbContext
                 .HasConstraintName("Fk_Egresos_Cajas_Chicas");
         });
 
+        modelBuilder.Entity<Egreso>()
+            .ToTable("Egresos", s => s.HasTrigger("after_insert_recalcular_egresos"));
+
+        modelBuilder.Entity<Egreso>()
+            .ToTable("Egresos", s => s.HasTrigger("after_update_recalcular_egresos"));
+
+        modelBuilder.Entity<Egreso>()
+            .ToTable("Egresos", s => s.HasTrigger("after_delete_recalcular_egresos"));
+         
         modelBuilder.Entity<Servicio>(entity =>
         {
             entity.HasKey(e => e.IdServicio).HasName("PK__Servicio__6FD07FDC9CAEE091");
@@ -325,6 +346,12 @@ public partial class EstacionamientoContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("Fk_Servicios_Tarifas");
         });
+
+        modelBuilder.Entity<Servicio>()
+            .ToTable("Servicios", s => s.HasTrigger("after_update_recalcular_servicios"));
+
+        modelBuilder.Entity<Servicio>()
+            .ToTable("Servicios", s => s.HasTrigger("after_delete_recalcular_servicios"));
 
         modelBuilder.Entity<Tarifa>(entity =>
         {
