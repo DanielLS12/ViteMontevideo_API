@@ -63,7 +63,9 @@ namespace ViteMontevideo_API.Services.Mapper
             CreateMap<Trabajador, TrabajadorResponseDto>();
 
             // Usuarios
-            CreateMap<Usuario, UsuarioDto>();
+            CreateMap<Usuario, UsuarioRequestDto>();
+            CreateMap<Usuario, UsuarioResponseDto>();
+            CreateMap<Usuario, UsuarioBasicResponseDto>();
 
             // Vehiculos
             CreateMap<VehiculoCrearRequestDto, Vehiculo>();

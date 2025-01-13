@@ -1,62 +1,51 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Cors;
-using System.Text;
-using System.Security.Claims;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using ViteMontevideo_API.Services.Exceptions;
-using ViteMontevideo_API.Persistence.Context;
 using ViteMontevideo_API.Presentation.ActionFilters;
 using ViteMontevideo_API.Services.Dtos.Usuarios;
+using ViteMontevideo_API.Services.Interfaces;
 
 namespace ViteMontevideo_API.Presentation.Controllers
 {
     [EnableCors("ReglasCors")]
-    [Route("auth/[controller]")]
+    [Route("api/[controller]")]
     [ApiController]
     public class UsuarioController : ControllerBase
     {
-        private readonly EstacionamientoContext _dbContext;
-        private readonly string secretKey;
+        private readonly IUsuarioService _usuarioService;
 
-        public UsuarioController(EstacionamientoContext dbContext, IConfiguration config)
+        public UsuarioController(IUsuarioService usuarioService)
         {
-            _dbContext = dbContext;
-            secretKey = config.GetSection("JwtSettings").GetSection("SecretKey").ToString();
+            _usuarioService = usuarioService;
         }
 
-        [HttpPost]
-        [Route("IniciarSesion")]
-        [ServiceFilter(typeof(ValidationFilterAttribute))]
-        public IActionResult IniciarSesion(UsuarioDto usuario)
+        [HttpGet]
+        public async Task<IActionResult> GetAvailableUsers()
         {
-            var usuarioEncontrado = _dbContext.Usuarios
-                            .FromSqlRaw("EXEC dbo.Acceder @Nombre={0}, @Clave={1}", usuario.Nombre, usuario.Clave)
-                            .AsEnumerable()
-                            .Select(u => new { u.IdUsuario, u.Nombre, u.Estado })
-                            .FirstOrDefault() ?? throw new UnauthorizedAccessException("Credenciales incorrectas.");
+            var response = await _usuarioService.GetAvailableUsers();
+            return Ok(response);
+        }
 
-            if (!usuarioEncontrado.Estado)
-                throw new ForbiddenException("Usuario bloqueado.");
+        [HttpGet("{username}")]
+        public async Task<IActionResult> GetByUsername(string username)
+        {
+            var response = await _usuarioService.GetByUsername(username);
+            return Ok(response);
+        }
 
-            var bytesKey = Encoding.ASCII.GetBytes(secretKey);
-            var claims = new ClaimsIdentity();
-            claims.AddClaim(new Claim("usuario", usuario.Nombre));
+        [HttpPost("Registrar")]
+        [ServiceFilter(typeof(ValidationFilterAttribute))]
+        public async Task<IActionResult> Registrar(UsuarioRequestDto request)
+        {
+            var response = await _usuarioService.Register(request);
+            return CreatedAtAction(nameof(GetByUsername), new { username = response.Data is UsuarioResponseDto usuario ? usuario.Nombre : "" }, response);
+        }
 
-            var tokenDescriptor = new SecurityTokenDescriptor
-            {
-                Subject = claims,
-                Expires = DateTime.UtcNow.AddHours(18),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(bytesKey), SecurityAlgorithms.HmacSha256Signature),
-            };
-
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var tokenConfig = tokenHandler.CreateToken(tokenDescriptor);
-
-            string tokenCreado = tokenHandler.WriteToken(tokenConfig);
-
-            return Ok(tokenCreado);
+        [HttpPost("Login")]
+        [ServiceFilter(typeof(ValidationFilterAttribute))]
+        public async Task<IActionResult> Login(UsuarioRequestDto request)
+        {
+            var response = await _usuarioService.Login(request);
+            return Ok(response);
         }
     }
 }

@@ -2,7 +2,7 @@
 
 namespace ViteMontevideo_API.Services.Dtos.Usuarios
 {
-    public class UsuarioDto
+    public class UsuarioRequestDto
     {
         [Required(ErrorMessage = "El usuario es requerido.")]
         public string Nombre { get; set; } = null!;
