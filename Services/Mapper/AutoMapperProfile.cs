@@ -1,7 +1,13 @@
 ﻿using AutoMapper;
 using ViteMontevideo_API.Persistence.Models;
+using ViteMontevideo_API.Services.Dtos.Actividades.Requests;
+using ViteMontevideo_API.Services.Dtos.Actividades.Responses;
 using ViteMontevideo_API.Services.Dtos.CajasChicas.Requests;
 using ViteMontevideo_API.Services.Dtos.CajasChicas.Responses;
+using ViteMontevideo_API.Services.Dtos.Cargos.Requests;
+using ViteMontevideo_API.Services.Dtos.Cargos.Responses;
+using ViteMontevideo_API.Services.Dtos.Categorias.Requests;
+using ViteMontevideo_API.Services.Dtos.Categorias.Responses;
 using ViteMontevideo_API.Services.Dtos.Clientes.Requests;
 using ViteMontevideo_API.Services.Dtos.Clientes.Responses;
 using ViteMontevideo_API.Services.Dtos.ComerciosAdicionales.Requests;
@@ -29,6 +35,10 @@ namespace ViteMontevideo_API.Services.Mapper
             // Cajas Chicas
             CreateMap<CajaChicaCrearRequestDto, CajaChica>();
             CreateMap<CajaChica, CajaChicaResponseDto>();
+
+            // Cargos
+            CreateMap<CargoRequestDto, Cargo>();
+            CreateMap<Cargo, CargoResponseDto>();
 
             // Clientes
             CreateMap<Cliente, ClienteDto>();

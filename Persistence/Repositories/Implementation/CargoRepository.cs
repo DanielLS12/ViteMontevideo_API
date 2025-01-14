@@ -13,5 +13,11 @@ namespace ViteMontevideo_API.Persistence.Repositories.Implementation
 
         public async Task<bool> ExistsById(byte id) =>
             await _context.Cargos.AnyAsync(c => c.IdCargo == id);
+
+        public async Task<bool> ExistsByNombre(string nombre) =>
+            await _context.Cargos.AnyAsync(c => c.Nombre.Contains(nombre));
+
+        public async Task<bool> ExistsByIdAndNombre(byte id, string nombre) =>
+            await _context.Cargos.AnyAsync(c => c.Nombre.Contains(nombre) && c.IdCargo != id);
     }
 }
