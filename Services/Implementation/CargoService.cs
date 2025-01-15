@@ -20,11 +20,11 @@ namespace ViteMontevideo_API.Services.Implementation
             _mapper = mapper;
         }
 
-        public async Task<DataResponse<Cargo>> GetAll()
+        public async Task<DataResponse<CargoResponseDto>> GetAll()
         {
             var cargos = await _repository.GetAll();
             int cantidad = cargos.Count();
-            return new DataResponse<Cargo>(cantidad, cargos);
+            return new DataResponse<CargoResponseDto>(cantidad, _mapper.Map<List<CargoResponseDto>>(cargos));
         }
 
         public async Task<ApiResponse> Insert(CargoRequestDto cargo)
