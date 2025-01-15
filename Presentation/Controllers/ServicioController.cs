@@ -9,7 +9,7 @@ using ViteMontevideo_API.Services.Interfaces;
 namespace ViteMontevideo_API.Presentation.Controllers
 {
     [Route("api/[controller]")]
-    [Authorize]
+    [Authorize(Roles = "Admin,Cajero")]
     [ApiController]
     public class ServicioController : ControllerBase
     {
@@ -21,6 +21,7 @@ namespace ViteMontevideo_API.Presentation.Controllers
         }
 
         [HttpGet("{idCajaChica}")]
+        [Authorize]
         public async Task<IActionResult> GetAll(int idCajaChica)
         {
             var response = await _service.GetAll(idCajaChica);
@@ -28,6 +29,7 @@ namespace ViteMontevideo_API.Presentation.Controllers
         }
 
         [HttpGet("entradas-vehiculares")]
+        [Authorize]
         public async Task<IActionResult> GetAllEntradasVehiculares()
         {
             var response = await _service.GetAllServiciosEntrada();
@@ -35,6 +37,7 @@ namespace ViteMontevideo_API.Presentation.Controllers
         }
 
         [HttpGet("salidas-vehiculares")]
+        [Authorize]
         public async Task<IActionResult> GetAllSalidasVehiculares([FromQuery] FiltroServicioSalida filtro)
         {
             var response = await _service.GetAllServiciosSalida(filtro);
@@ -42,6 +45,7 @@ namespace ViteMontevideo_API.Presentation.Controllers
         }
 
         [HttpGet("{placa}/entrada-vehicular")]
+        [Authorize]
         public async Task<IActionResult> GetServicioEntradaByPlaca(string placa)
         {
             var response = await _service.GetServicioEntradaByPlaca(placa);
@@ -49,6 +53,7 @@ namespace ViteMontevideo_API.Presentation.Controllers
         }
 
         [HttpGet("{id}/salida-vehicular")]
+        [Authorize]
         public async Task<IActionResult> GetServicioSalidaById(int id)
         {
             var response = await _service.GetServicioSalidaById(id);
@@ -87,6 +92,7 @@ namespace ViteMontevideo_API.Presentation.Controllers
         }
 
         [HttpPatch("{id}/anular-pago")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CancelPayment(int id)
         {
             var response = await _service.CancelPayment(id);

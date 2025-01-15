@@ -9,7 +9,7 @@ using ViteMontevideo_API.Services.Interfaces;
 namespace ViteMontevideo_API.Presentation.Controllers
 {
     [Route("api/[controller]")]
-    [Authorize]
+    [Authorize(Roles = "Admin,Cajero")]
     [ApiController]
     public class CajaChicaController : ControllerBase
     {
@@ -21,6 +21,7 @@ namespace ViteMontevideo_API.Presentation.Controllers
         }
 
         [HttpGet]
+        [Authorize]
         public async Task<IActionResult> GetAllPageCursor([FromQuery] FiltroCajaChica filtro)
         {
             var response = await _service.GetAllPageCursor(filtro);
@@ -29,6 +30,7 @@ namespace ViteMontevideo_API.Presentation.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize]
         public async Task<IActionResult> GetById(int id)
         {
             var response = await _service.GetById(id);
@@ -36,6 +38,7 @@ namespace ViteMontevideo_API.Presentation.Controllers
         }
 
         [HttpGet("{fecha}/informe")]
+        [Authorize]
         public async Task<IActionResult> GetAllInformes(DateTime fecha)
         {
             var response = await _service.GetAllInformes(fecha);
@@ -59,6 +62,7 @@ namespace ViteMontevideo_API.Presentation.Controllers
         }
 
         [HttpPatch("{id}/abrir")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Open(int id)
         {
             var response = await _service.Open(id);
@@ -74,6 +78,7 @@ namespace ViteMontevideo_API.Presentation.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteById(int id)
         {
             var response = await _service.DeleteById(id);

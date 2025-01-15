@@ -1,13 +1,14 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ViteMontevideo_API.Persistence.Models;
 using ViteMontevideo_API.Presentation.ActionFilters;
+using ViteMontevideo_API.Services.Dtos.Actividades.Requests;
+using ViteMontevideo_API.Services.Dtos.Actividades.Responses;
 using ViteMontevideo_API.Services.Interfaces;
 
 namespace ViteMontevideo_API.Presentation.Controllers
 {
     [Route("api/[controller]")]
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     [ApiController]
     public class ActividadController : ControllerBase
     {
@@ -34,15 +35,15 @@ namespace ViteMontevideo_API.Presentation.Controllers
 
         [HttpPost]
         [ServiceFilter(typeof(ValidationFilterAttribute))]
-        public async Task<IActionResult> Insert(Actividad request)
+        public async Task<IActionResult> Insert(ActividadRequestDto request)
         {
             var response = await _service.Insert(request);
-            return CreatedAtAction(nameof(GetById), new { id = 1 }, response);
+            return CreatedAtAction(nameof(GetById), new { id = response.Data is ActividadResponseDto actividadResponse ? actividadResponse.IdActividad : 0 }, response);
         }
 
         [HttpPut("{id}")]
         [ServiceFilter(typeof(ValidationFilterAttribute))]
-        public async Task<IActionResult> Update([FromRoute] short id, [FromBody] Actividad request)
+        public async Task<IActionResult> Update([FromRoute] short id, [FromBody] ActividadRequestDto request)
         {
             var response = await _service.Update(id, request);
             return Ok(response);

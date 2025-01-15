@@ -8,7 +8,7 @@ using ViteMontevideo_API.Services.Interfaces;
 namespace ViteMontevideo_API.Presentation.Controllers
 {
     [Route("api/[controller]")]
-    [Authorize]
+    [Authorize(Roles = "Admin,Cajero")]
     [ApiController]
     public class TrabajadorController : ControllerBase
     {
@@ -20,6 +20,7 @@ namespace ViteMontevideo_API.Presentation.Controllers
         }
 
         [HttpGet]
+        [Authorize]
         public async Task<IActionResult> GetAll()
         {
             var response = await _service.GetAll();
@@ -27,6 +28,7 @@ namespace ViteMontevideo_API.Presentation.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize]
         public async Task<IActionResult> GetById(short id)
         {
             var response = await _service.GetById(id);

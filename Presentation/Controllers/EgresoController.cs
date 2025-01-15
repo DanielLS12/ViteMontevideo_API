@@ -4,13 +4,12 @@ using ViteMontevideo_API.Presentation.ActionFilters;
 using ViteMontevideo_API.Services.Dtos.Egresos.Parameters;
 using ViteMontevideo_API.Services.Dtos.Egresos.Requests;
 using ViteMontevideo_API.Services.Dtos.Egresos.Responses;
-using ViteMontevideo_API.Services.Implementation;
 using ViteMontevideo_API.Services.Interfaces;
 
 namespace ViteMontevideo_API.Presentation.Controllers
 {
     [Route("api/[controller]")]
-    [Authorize]
+    [Authorize(Roles = "Admin,Cajero")]
     [ApiController]
     public class EgresoController : ControllerBase
     {
@@ -22,6 +21,7 @@ namespace ViteMontevideo_API.Presentation.Controllers
         }
 
         [HttpGet("{idCajaChica}")]
+        [Authorize]
         public async Task<IActionResult> GetAll(int idCajaChica)
         {
             var response = await _service.GetAll(idCajaChica);
@@ -29,6 +29,7 @@ namespace ViteMontevideo_API.Presentation.Controllers
         }
 
         [HttpGet]
+        [Authorize]
         public async Task<IActionResult> GetAllPageCursor([FromQuery] FiltroEgreso filtro)
         {
             var response = await _service.GetAllPageCursor(filtro);
@@ -37,6 +38,7 @@ namespace ViteMontevideo_API.Presentation.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize]
         public async Task<IActionResult> GetById(int id)
         {
             var response = await _service.GetById(id);

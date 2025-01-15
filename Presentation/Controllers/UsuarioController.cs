@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Cors;
 using ViteMontevideo_API.Presentation.ActionFilters;
 using ViteMontevideo_API.Services.Dtos.Usuarios;
 using ViteMontevideo_API.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ViteMontevideo_API.Presentation.Controllers
 {
@@ -19,6 +20,7 @@ namespace ViteMontevideo_API.Presentation.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetAvailableUsers()
         {
             var response = await _usuarioService.GetAvailableUsers();
@@ -26,6 +28,7 @@ namespace ViteMontevideo_API.Presentation.Controllers
         }
 
         [HttpGet("{username}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetByUsername(string username)
         {
             var response = await _usuarioService.GetByUsername(username);

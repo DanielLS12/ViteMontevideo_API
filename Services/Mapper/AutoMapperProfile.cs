@@ -32,6 +32,10 @@ namespace ViteMontevideo_API.Services.Mapper
     {
         public AutoMapperProfile()
         {
+            // Actividades
+            CreateMap<ActividadRequestDto, Actividad>();
+            CreateMap<Actividad, ActividadResponseDto>();
+
             // Cajas Chicas
             CreateMap<CajaChicaCrearRequestDto, CajaChica>();
             CreateMap<CajaChica, CajaChicaResponseDto>();
@@ -39,6 +43,10 @@ namespace ViteMontevideo_API.Services.Mapper
             // Cargos
             CreateMap<CargoRequestDto, Cargo>();
             CreateMap<Cargo, CargoResponseDto>();
+
+            // Categorias
+            CreateMap<CategoriaRequestDto, Categoria>();
+            CreateMap<Categoria, CategoriaResponseDto>();
 
             // Clientes
             CreateMap<Cliente, ClienteDto>();

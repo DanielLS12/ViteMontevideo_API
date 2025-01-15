@@ -9,7 +9,7 @@ using ViteMontevideo_API.Services.Interfaces;
 namespace ViteMontevideo_API.Presentation.Controllers
 {
     [Route("api/[controller]")]
-    [Authorize]
+    [Authorize(Roles = "Admin,Cajero")]
     [ApiController]
     public class ContratoAbonadoController : ControllerBase
     {
@@ -21,6 +21,7 @@ namespace ViteMontevideo_API.Presentation.Controllers
         }
 
         [HttpGet("{idCajaChica}")]
+        [Authorize]
         public async Task<IActionResult> GetAll(int idCajaChica)
         {
             var response = await _service.GetAll(idCajaChica);
@@ -28,6 +29,7 @@ namespace ViteMontevideo_API.Presentation.Controllers
         }
 
         [HttpGet]
+        [Authorize]
         public async Task<IActionResult> GetAllPageCursor([FromQuery] FiltroContratoAbonado filtro)
         {
             var response = await _service.GetAllPageCursor(filtro);
@@ -36,6 +38,7 @@ namespace ViteMontevideo_API.Presentation.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize]
         public async Task<IActionResult> GetById(int id)
         {
             var response = await _service.GetById(id);
@@ -67,6 +70,7 @@ namespace ViteMontevideo_API.Presentation.Controllers
         }
 
         [HttpPatch("{id}/anular-pago")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CancelPayment([FromRoute] int id)
         {
             var response = await _service.CancelPayment(id);

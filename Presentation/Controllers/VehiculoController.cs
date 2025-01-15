@@ -9,7 +9,7 @@ using ViteMontevideo_API.Services.Interfaces;
 namespace ViteMontevideo_API.Presentation.Controllers
 {
     [Route("api/[controller]")]
-    [Authorize]
+    [Authorize(Roles = "Admin,Cajero")]
     [ApiController]
     public class VehiculoController : ControllerBase
     {
@@ -21,6 +21,7 @@ namespace ViteMontevideo_API.Presentation.Controllers
         }
 
         [HttpGet]
+        [Authorize]
         public async Task<IActionResult> GetAllPageCursor([FromQuery] FiltroVehiculo filtro)
         {
             var response = await _service.GetAllPageCursor(filtro);
@@ -29,6 +30,7 @@ namespace ViteMontevideo_API.Presentation.Controllers
         }
 
         [HttpGet("{id:int}")]
+        [Authorize]
         public async Task<IActionResult> GetById(int id)
         {
             var response = await _service.GetById(id);
@@ -36,6 +38,7 @@ namespace ViteMontevideo_API.Presentation.Controllers
         }
 
         [HttpGet("{placa}")]
+        [Authorize]
         public async Task<IActionResult> GetByPlaca(string placa)
         {
             var response = await _service.GetByPlaca(placa);
