@@ -79,7 +79,7 @@ namespace ViteMontevideo_API.Configuration
             services.AddScoped<ICajaChicaService, CajaChicaService>();
             services.AddScoped<IUsuarioService, UsuarioService>();
 
-            services.AddTransient<ErrorHandlerMiddleware>();
+            services.AddSingleton<ErrorHandlerMiddleware>();
             services.AddScoped<ValidationFilterAttribute>();
 
             services.Configure<ApiBehaviorOptions>(opt =>

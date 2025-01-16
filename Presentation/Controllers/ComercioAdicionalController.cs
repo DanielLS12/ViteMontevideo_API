@@ -20,20 +20,12 @@ namespace ViteMontevideo_API.Presentation.Controllers
             _service = service;
         }
 
-        [HttpGet("{idCajaChica}")]
-        [Authorize]
-        public async Task<IActionResult> GetAll(int idCajaChica)
-        {
-            var response = await _service.GetAll(idCajaChica);
-            return Ok(response);
-        }
-
         [HttpGet]
         [Authorize]
         public async Task<IActionResult> GetAllPageCursor([FromQuery] FiltroComercioAdicional filtro)
         {
             var response = await _service.GetAllPageCursor(filtro);
-            Response.Headers.Add("X-Pagination", $"Next Cursor={response.SiguienteCursor}");
+            Response.Headers.Append("X-Pagination", $"Next Cursor={response.SiguienteCursor}");
             return Ok(response);
         }
 

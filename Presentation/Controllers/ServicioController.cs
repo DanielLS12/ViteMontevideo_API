@@ -20,14 +20,6 @@ namespace ViteMontevideo_API.Presentation.Controllers
             _service = service;
         }
 
-        [HttpGet("{idCajaChica}")]
-        [Authorize]
-        public async Task<IActionResult> GetAll(int idCajaChica)
-        {
-            var response = await _service.GetAll(idCajaChica);
-            return Ok(response);
-        }
-
         [HttpGet("entradas-vehiculares")]
         [Authorize]
         public async Task<IActionResult> GetAllEntradasVehiculares()

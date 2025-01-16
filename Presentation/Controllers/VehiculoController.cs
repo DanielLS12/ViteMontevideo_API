@@ -25,7 +25,7 @@ namespace ViteMontevideo_API.Presentation.Controllers
         public async Task<IActionResult> GetAllPageCursor([FromQuery] FiltroVehiculo filtro)
         {
             var response = await _service.GetAllPageCursor(filtro);
-            Response.Headers.Add("X-Pagination", $"Next Cursor={response.SiguienteCursor}");
+            Response.Headers.Append("X-Pagination", $"Next Cursor={response.SiguienteCursor}");
             return Ok(response);
         }
 
