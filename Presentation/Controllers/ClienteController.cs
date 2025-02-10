@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using ViteMontevideo_API.Configuration;
 using ViteMontevideo_API.Presentation.ActionFilters;
 using ViteMontevideo_API.Services.Dtos.Clientes.Parameters;
 using ViteMontevideo_API.Services.Dtos.Clientes.Requests;
@@ -9,6 +11,7 @@ using ViteMontevideo_API.Services.Interfaces;
 namespace ViteMontevideo_API.Presentation.Controllers
 {
     [Route("api/[controller]")]
+    [EnableRateLimiting(nameof(RateLimitPolicy.HighFrequencyPolicy))]
     [Authorize(Roles = "Admin,Cajero")]
     [ApiController]
     public class ClienteController : ControllerBase
@@ -25,7 +28,7 @@ namespace ViteMontevideo_API.Presentation.Controllers
         public async Task<IActionResult> GetAllPageCursor([FromQuery] FiltroCliente filtro)
         {
             var response = await _service.GetAllPageCursor(filtro);
-            Response.Headers.Add("X-Pagination", $"Next Cursor={response.SiguienteCursor}");
+            Response.Headers.Append("X-Pagination", $"Next Cursor={response.SiguienteCursor}");
             return Ok(response);
         }
 

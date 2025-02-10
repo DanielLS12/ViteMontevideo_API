@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using ViteMontevideo_API.Configuration;
 using ViteMontevideo_API.Presentation.ActionFilters;
 using ViteMontevideo_API.Services.Dtos.Vehiculos.Parameters;
 using ViteMontevideo_API.Services.Dtos.Vehiculos.Requests;
@@ -9,6 +11,7 @@ using ViteMontevideo_API.Services.Interfaces;
 namespace ViteMontevideo_API.Presentation.Controllers
 {
     [Route("api/[controller]")]
+    [EnableRateLimiting(nameof(RateLimitPolicy.HighFrequencyPolicy))]
     [Authorize(Roles = "Admin,Cajero")]
     [ApiController]
     public class VehiculoController : ControllerBase

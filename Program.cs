@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.RateLimiting;
 using System.Text.Json.Serialization;
+using System.Threading.RateLimiting;
 using ViteMontevideo_API.Configuration;
 using ViteMontevideo_API.Presentation.Middleware;
 
@@ -12,6 +14,25 @@ builder.Services.AddControllers()
             opt.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
             opt.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
         });
+
+builder.Services.AddRateLimiter(opt =>
+{
+    opt.AddFixedWindowLimiter(nameof(RateLimitPolicy.HighFrequencyPolicy), opt =>
+    {
+        opt.PermitLimit = 20;
+        opt.Window = TimeSpan.FromMinutes(2);
+        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+    });
+
+    opt.AddFixedWindowLimiter(nameof(RateLimitPolicy.LowFrequencyPolicy), opt =>
+    {
+        opt.PermitLimit = 10;
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+    });
+
+    opt.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+});
 
 builder.Services.AddCustomServices(builder.Configuration);
 builder.Services.AddSwaggerServices();
@@ -33,6 +54,8 @@ app.UseSwaggerUI();
 app.UseMiddleware<ErrorHandlerMiddleware>();
 
 app.UseCors("ReglasCors");
+
+app.UseRateLimiter();
 
 app.UseAuthentication();
 

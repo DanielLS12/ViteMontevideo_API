@@ -4,10 +4,13 @@ using ViteMontevideo_API.Presentation.ActionFilters;
 using ViteMontevideo_API.Services.Dtos.Usuarios;
 using ViteMontevideo_API.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.RateLimiting;
+using ViteMontevideo_API.Configuration;
 
 namespace ViteMontevideo_API.Presentation.Controllers
 {
     [EnableCors("ReglasCors")]
+    [EnableRateLimiting(nameof(RateLimitPolicy.HighFrequencyPolicy))]
     [Route("api/[controller]")]
     [ApiController]
     public class UsuarioController : ControllerBase
@@ -35,15 +38,16 @@ namespace ViteMontevideo_API.Presentation.Controllers
             return Ok(response);
         }
 
-        [HttpPost("Registrar")]
-        [ServiceFilter(typeof(ValidationFilterAttribute))]
-        public async Task<IActionResult> Registrar(UsuarioRequestDto request)
-        {
-            var response = await _usuarioService.Register(request);
-            return CreatedAtAction(nameof(GetByUsername), new { username = response.Data is UsuarioResponseDto usuario ? usuario.Nombre : "" }, response);
-        }
+        //[HttpPost("Registrar")]
+        //[ServiceFilter(typeof(ValidationFilterAttribute))]
+        //public async Task<IActionResult> Registrar(UsuarioRequestDto request)
+        //{
+        //    var response = await _usuarioService.Register(request);
+        //    return CreatedAtAction(nameof(GetByUsername), new { username = response.Data is UsuarioResponseDto usuario ? usuario.Nombre : "" }, response);
+        //}
 
         [HttpPost("Login")]
+        [EnableRateLimiting(nameof(RateLimitPolicy.LowFrequencyPolicy))]
         [ServiceFilter(typeof(ValidationFilterAttribute))]
         public async Task<IActionResult> Login(UsuarioRequestDto request)
         {

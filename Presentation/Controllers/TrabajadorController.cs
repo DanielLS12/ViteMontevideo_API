@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using ViteMontevideo_API.Configuration;
 using ViteMontevideo_API.Presentation.ActionFilters;
 using ViteMontevideo_API.Services.Dtos.Trabajadores.Requests;
 using ViteMontevideo_API.Services.Dtos.Trabajadores.Responses;
@@ -8,6 +10,7 @@ using ViteMontevideo_API.Services.Interfaces;
 namespace ViteMontevideo_API.Presentation.Controllers
 {
     [Route("api/[controller]")]
+    [EnableRateLimiting(nameof(RateLimitPolicy.HighFrequencyPolicy))]
     [Authorize(Roles = "Admin,Cajero")]
     [ApiController]
     public class TrabajadorController : ControllerBase

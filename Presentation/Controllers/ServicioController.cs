@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using ViteMontevideo_API.Configuration;
 using ViteMontevideo_API.Presentation.ActionFilters;
 using ViteMontevideo_API.Services.Dtos.Servicios.Parameters;
 using ViteMontevideo_API.Services.Dtos.Servicios.Requests;
@@ -9,6 +11,7 @@ using ViteMontevideo_API.Services.Interfaces;
 namespace ViteMontevideo_API.Presentation.Controllers
 {
     [Route("api/[controller]")]
+    [EnableRateLimiting(nameof(RateLimitPolicy.HighFrequencyPolicy))]
     [Authorize(Roles = "Admin,Cajero")]
     [ApiController]
     public class ServicioController : ControllerBase
@@ -21,6 +24,7 @@ namespace ViteMontevideo_API.Presentation.Controllers
         }
 
         [HttpGet("entradas-vehiculares")]
+        [EnableRateLimiting(nameof(RateLimitPolicy.LowFrequencyPolicy))]
         [Authorize]
         public async Task<IActionResult> GetAllEntradasVehiculares()
         {
@@ -29,6 +33,7 @@ namespace ViteMontevideo_API.Presentation.Controllers
         }
 
         [HttpGet("salidas-vehiculares")]
+        [EnableRateLimiting(nameof(RateLimitPolicy.LowFrequencyPolicy))]
         [Authorize]
         public async Task<IActionResult> GetAllSalidasVehiculares([FromQuery] FiltroServicioSalida filtro)
         {

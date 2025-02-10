@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using ViteMontevideo_API.Configuration;
 using ViteMontevideo_API.Presentation.ActionFilters;
 using ViteMontevideo_API.Services.Dtos.CajasChicas.Parameters;
 using ViteMontevideo_API.Services.Dtos.CajasChicas.Requests;
@@ -9,6 +11,7 @@ using ViteMontevideo_API.Services.Interfaces;
 namespace ViteMontevideo_API.Presentation.Controllers
 {
     [Route("api/[controller]")]
+    [EnableRateLimiting(nameof(RateLimitPolicy.LowFrequencyPolicy))]
     [Authorize(Roles = "Admin,Cajero")]
     [ApiController]
     public class CajaChicaController : ControllerBase
@@ -66,6 +69,7 @@ namespace ViteMontevideo_API.Presentation.Controllers
         }
 
         [HttpGet]
+        [EnableRateLimiting(nameof(RateLimitPolicy.HighFrequencyPolicy))]
         [Authorize]
         public async Task<IActionResult> GetAllPageCursor([FromQuery] FiltroCajaChica filtro)
         {
@@ -75,6 +79,7 @@ namespace ViteMontevideo_API.Presentation.Controllers
         }
 
         [HttpGet("{id}")]
+        [EnableRateLimiting(nameof(RateLimitPolicy.HighFrequencyPolicy))]
         [Authorize]
         public async Task<IActionResult> GetById(int id)
         {
