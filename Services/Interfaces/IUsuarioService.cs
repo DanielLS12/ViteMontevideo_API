@@ -8,6 +8,6 @@ namespace ViteMontevideo_API.Services.Interfaces
         Task<DataResponse<UsuarioBasicResponseDto>> GetAvailableUsers();
         Task<UsuarioResponseDto> GetByUsername(string username);
         Task<ApiResponse> Register(UsuarioRequestDto usuario);
-        Task<ApiResponse> Login(UsuarioRequestDto usuario);
+        Task<LoginResponseDto> Login(UsuarioRequestDto usuario);
     }
 }

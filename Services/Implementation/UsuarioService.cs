@@ -52,15 +52,18 @@ namespace ViteMontevideo_API.Services.Implementation
             return ApiResponse.Success("El usuario ha sido creado.", _mapper.Map<UsuarioResponseDto>(dbUsuario));
         }
 
-        public async Task<ApiResponse> Login(UsuarioRequestDto usuario)
+        public async Task<LoginResponseDto> Login(UsuarioRequestDto usuario)
         {
             var dbUsuario = _usuarioRepository.Login(usuario.Nombre, usuario.Clave)
                 ?? throw new UnauthorizedAccessException("Credenciales incorrectas.");
 
             if (!dbUsuario.Estado)
-                throw new ForbiddenException("Usuario bloqueado.");
+                throw new BadRequestException("Usuario bloqueado.");
 
-            return ApiResponse.Success("Sesión iniciada",await GenerateToken(usuario));
+            return new LoginResponseDto
+            {
+                AccessToken = await GenerateToken(usuario)
+            };
         }
 
         private async Task<string> GenerateToken(UsuarioRequestDto usuario)
